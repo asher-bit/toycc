@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>toycc · AI 编译器实战课程</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  <style>
+    .markdown-section { max-width: 900px; }
+    .sidebar { font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script>
+    window.$docsify = {
+      name: 'toycc 课程',
+      repo: 'asher-bit/toycc',
+      // 所有 markdown 都从 course/ 目录加载(仓库里唯一的内容源)
+      basePath: 'course/',
+      loadSidebar: true,
+      maxLevel: 4,
+      subMaxLevel: 2,
+      search: {
+        placeholder: '搜索课程内容',
+        noData: '没有找到结果',
+        depth: 6
+      },
+      pagination: {
+        previousText: '上一课',
+        nextText: '下一课',
+        crossChapter: true
+      }
+    };
+  </script>
+
+  <script src="//cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-pagination/dist/docsify-pagination.min.js"></script>
+  <!-- 代码高亮: 编译器课程需要的语言 -->
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-c.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-cpp.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-markup.min.js"></script>
+</head>
+</html>
