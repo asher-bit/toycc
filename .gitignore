@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 生成的代码产物（代码生成实验的输出）
+out.c
+out.py
+
+# 自动调优日志
+tune_logs/
+
+# 测试缓存
+.pytest_cache/
+
+# 虚拟环境
+venv/
+.venv/
+env/
+
+# 与本项目无关的其它独立项目
+ChatDev/
+vditor-demo/
