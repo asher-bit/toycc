@@ -198,3 +198,7 @@ A：不要。直接调 CUTLASS/cuBLAS（用 BYOC 集成），或者用 autotune
 **下一步**：第 24 课——自研 GPU 工具链全景。把 compiler / driver /
 runtime / assembler / profiler / debugger 这些组件拼成一张完整的图，
 然后告诉你"你的第一份任务"该从哪入手。
+
+---
+
+**导航**：⬅ [上一节](lesson22.md)（第 22 课 · GPU 编译器技术）　｜　[下一节](lesson24.md)（第 24 课 · 自研 GPU 工具链全景）➡

@@ -305,3 +305,7 @@ A：官方教程 `tutorials/language/schedule_primitives.py`（中文站有翻�
 **下一步**：第 12 课，我们从"融合"这个单独优化，跳到"整个优化全景"——
 编译器还有哪些 pass、`op_pattern` 系统、以及支配分析（读懂 fuse_ops
 最后一块拼图）。
+
+---
+
+**导航**：⬅ [上一节](lesson10.md)（第 10 课 · 从看懂到上手）　｜　[下一节](lesson12.md)（第 12 课 · 优化全景）➡
