@@ -24,6 +24,10 @@
 - [第 18 课 · 量化与精度](lesson18.md)
 - [第 19 课 · 模型导入](lesson19.md)
 - [第 20 课 · 性能与算子](lesson20.md)
+- [第 21 课 · GPU 芯片架构](lesson21.md)
+- [第 22 课 · GPU 编译器技术](lesson22.md)
+- [第 23 课 · Kernel 与性能分析](lesson23.md)
+- [第 24 课 · 自研 GPU 工具链](lesson24.md)
 
 **附录**
 

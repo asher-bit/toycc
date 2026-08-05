@@ -442,12 +442,83 @@ Benchmark 方法论: warmup → 测N次取中位数 → 注明测的是什么
 """)
 
 
+def lesson21():
+    print("=== 第21课:GPU 芯片架构 ===")
+    from toycc.hardware import LATENCY
+    print("GPU = 大量小核的并行机器(SIMT), warp=32线程锁步执行")
+    print("\nSM 是资源单位:")
+    print("  寄存器文件 ~256KB / 共享内存 ~100KB / warp 上限 64")
+    print("\n内存层次(延迟):")
+    for k, v in LATENCY.items():
+        print(f"  {k:<10} {v} 周期")
+    print("""
+三个 GPU 编译器的核心矛盾:
+  1. 合并访问(coalescing)  → 省带宽
+  2. 占用率(occupancy)     → 隐藏延迟
+  3. 资源限制(寄存器/共享内存) → 不能溢出
+  这三者互相矛盾, 编译器就是在它们之间做平衡。
+详细见 course/lesson21.md
+""")
+
+
+def lesson22():
+    print("=== 第22课:GPU 编译器特有技术 ===")
+    print("""
+给 GPU 编译 ≠ 给 CPU 编译, 多了:
+  SIMT 语义   : 32线程锁步, 编译器保证一致
+  海量线程    : 线程/块/共享内存/寄存器 编译期分配
+  显式内存分层: 共享内存要手动搬
+  指令调度    : GPU 无乱序引擎, 顺序决定性能
+  PTX→SASS    : 虚拟汇编 → 真实机器码两层
+
+  predication : 把分支变成带开关的指令, 避免发散
+  占用率计算  : 编译期算出 SM 能放几个 warp
+详细见 course/lesson22.md
+""")
+
+
+def lesson23():
+    print("=== 第23课:Kernel 开发与性能分析 ===")
+    print("""
+日常工作循环:
+  写 kernel → benchmark → profiler 找瓶颈 → 优化 → 再测
+
+roofline 判断值不值得优化:
+  vector_add 强度≈0.08 → 带宽顶死(不用优化算)
+  matmul     强度≈5.3  → 有优化空间
+
+benchmark 方法论: warmup + 中位数 + 同步 + 同条件
+profiler 输出指标: 占用率/合并访问/发散/指令 stall
+最优 kernel → 固化成 TIR 模板 / autotune 搜索空间
+详细见 course/lesson23.md
+""")
+
+
+def lesson24():
+    print("=== 第24课:自研 GPU 工具链全景 ===")
+    print("""
+工具链组件:
+  编译器 + 汇编器 + 链接器 + 驱动 + 运行时 + profiler + 调试器
+
+给 TVM 加新后端的五步:
+  1. target 描述 (芯片的硬件特性表)
+  2. codegen (TIR → 你的芯片指令, relax.ext.<target>)
+  3. runtime 驱动 (让 VM 能跑你的芯片)
+  4. meta_schedule (搜最优调度)
+  5. 测试 + CI
+
+入职第一周: 跑环境 → 看 target 描述 → 改小地方 → 提 PR
+详细见 course/lesson24.md
+""")
+
+
 LESSONS = {
     1: lesson01, 2: lesson02, 3: lesson03, 4: lesson04,
     5: lesson05, 6: lesson06, 7: lesson07, 8: lesson08, 9: lesson09,
     10: lesson10, 11: lesson11, 12: lesson12, 13: lesson13,
     14: lesson14, 15: lesson15, 16: lesson16, 17: lesson17,
-    18: lesson18, 19: lesson19, 20: lesson20,
+    18: lesson18, 19: lesson19, 20: lesson20, 21: lesson21,
+    22: lesson22, 23: lesson23, 24: lesson24,
 }
 
 

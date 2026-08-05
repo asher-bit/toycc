@@ -109,6 +109,24 @@
 - **warp / 线程块 / occupancy**：GPU 概念——32 线程锁步执行；块内共享内存；占用率。
 - **ILP / 流水线**：指令级并行，减少依赖、循环展开来利用。
 
+## GPU 芯片与编译器（第 21-24 课）
+
+- **SM (Streaming Multiprocessor)**：GPU 的计算集群，含 CUDA 核、寄存器文件、共享内存、张量核、warp 调度器。
+- **warp**：GPU 的执行单位，32 个线程一组，锁步执行（SIMT）。
+- **SIMT**：单指令多线程——一个 warp 的 32 个线程执行同一条指令。
+- **合并访问 (coalescing)**：warp 的 32 个线程读连续地址，合并成一次内存事务。
+- **分支发散 (branch divergence)**：warp 内线程走不同分支 → 串行执行 → 性能掉一半。
+- **predication**：把分支变成"带开关的指令"，避免真分支。
+- **共享内存 (shared memory)**：SM 内显式分配的快速内存，编译器用它做分块复用。
+- **张量核 (Tensor Core)**：专门做矩阵乘加（MMA）的硬件单元。
+- **占用率 (occupancy)**：活跃 warp / 最大 warp，决定延迟隐藏能力。
+- **寄存器溢出 (spill)**：寄存器装不下，值被迫写回内存。
+- **PTX / SASS**：GPU 的虚拟汇编 / 真实机器码，ptxas 负责从 PTX 到 SASS。
+- **ISA**：Instruction Set Architecture，指令集架构。
+- **工具链**：compiler + assembler + linker + driver + runtime + profiler + debugger。
+- **BYOC**：Bring Your Own Codegen，外部后端接入机制。
+- **target description**：告诉编译器芯片特性（寄存器/共享内存/线程数）的描述表。
+
 ## 量化与精度（第 18 课）
 
 - **量化 (Quantization)**：把 float 转成 int8 等低精度，内存/带宽减 4 倍 + int8 加速单元。
