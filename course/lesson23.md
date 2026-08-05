@@ -127,6 +127,8 @@ __global__ void matmul_naive(float* A, float* B, float* C, int M, int N, int K) 
 - 哪个访存是瓶颈（global/shared/local）
 - 哪个指令占的时间最多（指令级 profiling）
 - 有没有分支发散
+- **共享内存有没有 bank conflict**（第 21 课：撞库会拆多次，
+  padding/重排索引能解决）
 
 **你自研芯片时，也要做自己的 profiler**——这是工具链的一部分。
 输出的指标就是你第 21 课学的那些（占用率/合并访问/发散）。
