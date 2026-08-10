@@ -20,12 +20,10 @@
 - [第 8 课 · 真实 TVM（上）](lesson08.md)
 - [第 9 课 · 真实 TVM（下）](lesson09.md)
 
-**真实 TVM 源码精读专题**
-
+- [TVM 源码精读专题目录](tvm/README.md)
 - [`fuse_ops.cc` · Relax 算子融合](tvm/fuse_ops.md)
 - [`fold_constant.cc` · Relax 常量折叠](tvm/fold_constant.md)
 - [经典 Relax Pass 学习路线](tvm/pass_roadmap.md)
-- [专题目录](tvm/README.md)
 
 **④ 上手与进阶**
 
