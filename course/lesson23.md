@@ -154,6 +154,31 @@ __global__ void matmul_naive(float* A, float* B, float* C, int M, int N, int K) 
 **你自研芯片时，也要做自己的 profiler**——这是工具链的一部分。
 输出的指标就是你第 21 课学的那些（占用率/合并访问/发散）。
 
+> **手算：给你一份 profiler 输出，读给公司听**
+>
+> 对上面的 naive matmul（M=N=K=1024）跑 ncu，拿到：
+>
+> ```
+> Occupancy                100%     ← 资源不是瓶颈
+> DRAM Throughput           25%     ← 带宽远没用满
+> Compute (SM) Throughput    8%     
+> Uncoalesced Accesses   命中率高~0   ← 但 sectors/request 高→低效
+> Shared Memory Bank Conflicts 0
+> ```
+>
+> 三行读完的判断（这就是"读 profiler"的全部动作）：
+> 1. **资源满、计算闲、DRAM 只用了 1/4** → 不是算力/带宽顶死，
+>    是**访存请求的形态低效**（每请求只搬了 32 字节里的一小块）。
+> 2. 顺着 **global 访问模式**查代码：naive 版内层 `A[i*K+k]`
+>    相邻线程读不同 k（第 3.1 节说的"一半坏"）→ 每个 warp 32 个
+>    线程分散到 32 个 k 列 → 一次请求要被拆成几十次事务。
+> 3. 决定改法：**先 tile 到共享内存**（第 3.2 步 1），再测——
+>    预期 DRAM Throughput 升到 80%+，Uncoalesced 归零。
+>
+> **规则**：profiler 不是"看一坨数字"，它是**假设检验工具**——
+> 你先说出"我猜瓶颈在 X"，profiler 给证据，改完再测看指标是否移动。
+> 永远"改一处、测一次"（深层拓展 A）。
+
 ---
 
 ## 4. 从"手写 kernel"回到"编译器"
