@@ -114,7 +114,7 @@ python3 -c "import tvm; print(tvm.__version__)"
 
 ### 方式 C：从源码编译（进阶，参与开发时必须会）
 
-第 17 课详讲。先知道流程即可：
+第 16 课详讲。先知道流程即可：
 
 ```bash
 git clone --recursive https://github.com/apache/tvm tvm
@@ -153,7 +153,7 @@ cd ../python && pip install -e .
 - [ ] 能在 WSL 里运行 `python -m toycc.examples.demo`（把 toycc 拷进来）
 - [ ] 会用 `git clone` 拉一个仓库
 
-> 到这里，你就有资格进入第 17 课：真实的工程开发流程。
+> 到这里，你就有资格进入第 16 课：真实的工程开发流程。
 
 ---
 
@@ -182,4 +182,4 @@ A：纯 CPU 编译学习完全够（tvm 的 CPU 版本不需要显卡）。
 - WSL2 是 Windows 上参与 Linux 生态开发的标准姿势
 - 装完三步：`wsl --install` → 装工具链 → 装 tvm（pip 或 Docker）
 - 用官方 Docker 镜像 = 和 CI 环境一致，问题不折腾
-- 通关清单 5 条全打勾，就可以进第 17 课
+- 通关清单 5 条全打勾，就可以进第 16 课

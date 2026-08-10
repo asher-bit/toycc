@@ -1,271 +1,422 @@
-# 第 16 课：AI 编译器开发工程师知识地图（课程总结 + 查缺补漏）
+# 第 16 课：真实工程开发流程——从"会概念"到"会上手干活"
 
-> 这是收尾课。把前 15 课的知识拼成一张完整地图，
-> 标出"你已掌握"和"进阶方向"，让你知道自己在哪里、下一步去哪。
-
----
-
-## 1. 你已经掌握的知识全景（对照自测）
-
-### 核心三支柱
-- [ ] **IR**：计算图、Relax、TIR、MLIR、LLVM IR、PTX 的层级关系（第 1/14 课）
-- [ ] **Pass**：融合、布局、折叠、内存、DCE、CSE、化简（第 3/4/5/6/12 课）
-- [ ] **后端/代码生成**：多后端、下降链、ABI（第 7/14 课）
-
-### 正确性方法论
-- [ ] 参考执行器 + `max|Δ|` + rtol/atol + NaN 陷阱（第 2 课）
-
-### 硬件基础
-- [ ] 内存层次、缓存、寄存器、SIMD、延迟/带宽、GPU 模型（第 15 课）
-
-### 调度
-- [ ] 调度原语 + 为什么 reorder/tile 影响性能（第 11 课 + 模拟器）
-
-### 自动调度
-- [ ] 搜索空间/成本模型/Runner/Database（第 13 课）
-
-### 读真实源码
-- [ ] 三遍读法、对照表法、TVM 源码树导航、FFI、grep 功夫（第 8/9 课）
-
-### 参与开发
-- [ ] 贡献流程、找 first issue、读 PR、讨论黑话（第 10 课）
-
-### 量化与精度（第 18 课）
-- [ ] int8/fp16/bf16、scale/zero_point、PTQ/QAT、per-channel、误差分析
-
-### 模型导入与下降（第 19 课）
-- [ ] ONNX 格式、前端导入、legalize、动态形状、控制流、运行时 VM
-
-### 性能与算子（第 20 课）
-- [ ] roofline、benchmark 方法论、im2col、Winograd、GEMM 微内核
-
-### 工程流程（第 17 课）
-- [ ] build/测试/调试/CI、第一个任务演练
-
-### GPU 芯片与工具链（第 21~24 课）——自研 GPU 芯片核心
-- [ ] GPU 架构：SM/warp/SIMT、合并访问、分支发散、内存层次、Tensor Core、占用率（第 21 课）
-- [ ] GPU 编译技术：SIMT 编译、PTX→SASS、predication、指令调度、编译期占用率计算（第 22 课）
-- [ ] Kernel 开发与性能分析：roofline、benchmark、profiler 指标解读（第 23 课）
-- [ ] 工具链全景：compiler/assembler/driver/runtime/profiler/debugger、给自家芯片加后端（第 24 课）
-
-> 全部打勾，你已经是"能进编译器会议室讨论"的水平了。
-
----
-
-## 2. 完整知识地图：AI 编译器工程师要懂什么
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                   语言 / 工具层                          │
-│  Python(C++ 前端建模)   C++(TVM/LLVM 源码)              │
-│  git / GitHub / CI / 测试框架(pytest/lit)              │
-└────────────────────────┬────────────────────────────────┘
-                         │
-┌────────────────────────▼────────────────────────────────┐
-│                   深度学习层                              │
-│  算子语义(conv/matmul/norm/attention/...正确性含义)      │
-│  模型格式(ONNX/PyTorch)  量化/蒸馏/稀疏                  │
-└────────────────────────┬────────────────────────────────┘
-                         │
-┌────────────────────────▼────────────────────────────────┐
-│                  编译器核心层(本课程主体)                 │
-│  IR(图/循环/SSA)  Pass(图优化/分析)  调度(TIR)          │
-│  代码生成  运行时(VM/内存管理)  正确性验证               │
-└────────────────────────┬────────────────────────────────┘
-                         │
-┌────────────────────────▼────────────────────────────────┐
-│                   硬件层(第15课)                         │
-│  内存层次/缓存/寄存器 SIMD 多线程 GPU(CUDA/warp/共享内存) │
-└────────────────────────┬────────────────────────────────┘
-                         │
-┌────────────────────────▼────────────────────────────────┐
-│                系统 / 工程层(进阶)                       │
-│  编译器架构(LLVM/MLIR/TVM 设计) 自动调度                 │
-│  分布式推理  端侧部署  性能分析(profiling)               │
-└─────────────────────────────────────────────────────────┘
-```
-
-> **原理深挖：为什么这张地图必须"从上到下"分层？**
+> 目标：把"读代码"变成"改代码、跑测试、调 bug、提 PR"的完整流程。
+> 前置：附录 A（C++ 阅读）、附录 B（WSL2 环境）、第 10 课（git 流程）。
+> 环境：WSL2 里的 Linux（你已装好）。
 >
-> 注意分层的依据不是"哪个更重要"，而是**依赖方向**：
-> 上层可以**不需要**下层的细节（写 Python 建模不知道缓存多大也行），
-> 下层却**始终被上层利用**（编译器层里所有优化决策，最后都要看硬件是什么）。
+> 这课是"上班第一天"的完整预演。
+
+---
+
+## 1. 一天的开发日常是什么样
+
+在真实编译器团队（TVM/LLVM/MLIR），一天大概是：
+
+```
+上午:  git pull → 看新代码/PR → 复现一个 bug
+       (改代码 → 跑相关测试 → 改到通过)
+下午:  写新 pass 或修 bug → 写测试 → 跑 CI → 提 PR
+       (等 review → 根据意见修改 → 合并)
+```
+
+**核心循环**（你从第 3 课就知道的）：
+
+```
+改代码 → 跑测试 → 看失败原因 → 再改 → 通过 → 提交
+```
+
+> **原理深挖：为什么"跑测试"要快，比什么都重要？**
 >
-> 这种"上从天、下接地"的结构，和编译器本身的 IR 分层（第 14 课）
-> 是同一套逻辑：**每一层把下一层的复杂性封起来，只暴露一个干净的接口**。
+> 这条循环的命运取决于一个参数：**从"改完"到"看到失败原因"的时间**。
 >
-> 对你还有一层实际含义——**面试/写简历时，你能清楚定位自己在哪层**：
-> "我熟编译器核心层（IR/Pass/调度），现在在加深硬件层和工具链层"。
-> 别人一听就知道你的边界在哪、能接什么样的活。这比"我什么都懂"可信得多。
+> - 如果一次测试要 30 分钟：你一天顶多迭代 5 次，改错地方很容易
+>   "在错误的道路上走到天黑才回头"。
+> - 如果一次只要 2 秒：你可以疯狂试探——改一个数、跑一下、再改，
+>   心里随时知道对错。这是**调试时最有用的循环**。
+>
+> 所以真实工程里处处在优化"反馈速度"：
+> - 拆分测试目录，`-k fuse` 只跑相关的那一个，而不是跑全量
+> - 用缓存/增量编译，第二次编译只重编改动部分
+> - 环境问题用 Docker 固定，避免"换个机器就变成玄学"
+>
+> **对你入职的意义**：第一天就把"最快失败循环"建立起来——
+> 找到"改哪一行最快能验证"的命令，记下来。这决定了你每天能学多少、
+> 能试探多少边界。**慢测试是代码走样的温床，快测试是迭代的自由。**
+
+本课把这条循环里的每一步"工具化"。
 
 ---
 
-## 3. 每个方向的进阶路径（按兴趣选）
+## 2. 从源码构建 TVM（参与开发必须会）
 
-### 方向 A：TVM 生态深入（最贴近本课程）
-```
-你已经: 看懂 Relax/TIR pass
-下一步:
-  1. 精读 TVM 官方教程 tutorials/
-  2. 给 TVM 写一个小 pass(第10课 MyFirstPass)
-  3. 用 meta_schedule  tune 一个真实模型(第13课)
-  4. 参与 relax 的 LLM 推理优化(relax.frontend.llm)
-```
+pip 装的 tvm 只能"用"，改源码必须**从源码编译**。
 
-### 方向 B：MLIR 方向（通用编译器基础设施）
-```
-你已经: 看懂方言/下降/Operation
-下一步:
-  1. 跑通 MLIR Toy 教程 Ch2~Ch7(自己写一个方言)
-  2. 学 TableGen/ODS(声明式定义算子)
-  3. 用 PatternRewriter 写一个 MLIR pass
-  4. 对比 MLIR 的 Dialect 和 TVM 的 Op 注册表
+### 2.1 克隆 + 配置
+
+```bash
+git clone --recursive https://github.com/apache/tvm tvm
+cd tvm
+git checkout main
+mkdir build && cd build
+cp ../cmake/config.cmake .
 ```
 
-### 方向 C：LLVM 方向（通用编译/后端）
-```
-你已经: 看懂 LLVM IR/虚拟寄存器
-下一步:
-  1. 跑 LLVM Kaleidoscope 教程(写一个前端)
-  2. 学 pass 管理器(新/旧)
-  3. 学寄存器分配、指令选择
-  4. 用 llvm-mca/llvm-exegesis 分析性能
+### 2.2 打开配置，启用 LLVM
+
+```bash
+nano config.cmake    # 或 vim
+# 找到这一行, 去掉前面的 # :
+# set(USE_LLVM OFF)  →  set(USE_LLVM ON)
+# 保存退出 (nano: Ctrl+O 保存, Ctrl+X 退出)
 ```
 
-### 方向 D：性能工程（偏工程）
-```
-你已经: 硬件模型 + 调度概念
-下一步:
-  1. 学 perf / nsight / cachegrind 性能分析
-  2. 学会读汇编(看懂生成的 SASS/指令)
-  3. 手写并调优一个 kernel(GEMM/FlashAttention)
-  4. 理解 roofline 模型(算力 vs 带宽的权衡)
+> `USE_LLVM=ON` 让 TVM 能出口到 LLVM IR 并利用 LLVM 做目标代码生成。
+> 这是调试和跑 CPU 模型的关键。
+
+### 2.3 编译 + 装 Python 包
+
+```bash
+cmake .. && make -j$(nproc)
+# 编译完(第一次 10~30 分钟), 装 python 绑定
+cd ../python
+pip install -e .
 ```
 
-### 方向 E：推理部署（偏产品）
-```
-你已经: 正确性验证 + pass 管线
-下一步:
-  1. 学 ONNX Runtime / TensorRT 的图优化
-  2. 学量化落地(ptq/qat)
-  3. 学端侧部署(arm/x86/npu)
-  4. 学服务化推理(批处理/动态形状)
+### 2.4 验证
+
+```bash
+python3 -c "import tvm; print(tvm.__version__)"
+python3 -c "from tvm import relax; print(relax.__name__)"   # 确认 relax 在
 ```
 
-### 方向 F：自研 GPU 芯片工具链（最贴合你的目标，第 21~24 课）
+**常见问题**：
+- `make` 报错缺依赖 → `sudo apt install -y <缺的东西>`，重新 `make`
+- 内存不够（编译会吃很多）→ 加 `-j$(nproc-2)` 减少并行度
+- 改了 C++ 源码 → 回到 `build` 目录 `make -j$(nproc)`，python 端自动生效
+
+---
+
+## 3. 跑测试——你的安全网
+
+### 3.1 TVM 的测试体系
+
 ```
-你已经: GPU 架构 + 编译器全景 + 工具链组成
-下一步:
-  1. 吃透第 24 课的工具链全景图，确定自家芯片要哪几块
-  2. 用 toycc 的 codegen/passes 练手，跑通第 10 课任务
-  3. 为芯片写 target 描述(第 15 课 LATENCY 表)并加一个后端(第 24 课五步)
-  4. 用 roofline + profiler 建立性能回归基线(第 23 课)
+tests/python/relax/        ← Relax 相关(pass 测试在这)
+tests/python/tir/          ← TIR 相关
+tests/python/ir/           ← IR 基础设施
+tests/python/topi/         ← 算子实现
+```
+
+### 3.2 常用命令
+
+```bash
+# 跑单个测试文件
+pytest tests/python/relax/test_transform_fuse_ops.py
+
+# 跑指定测试(用 -k 过滤名字)
+pytest tests/python/relax/test_transform_fuse_ops.py -k "conv2d"
+
+# 跑整个目录(慢, 慎用)
+pytest tests/python/relax/transform/
+
+# 跑出错就停, 打印详细
+pytest -x -v tests/python/relax/test_transform_fuse_ops.py
+```
+
+### 3.3 测试长什么样（读法）
+
+TVM 测试通常是"构造小模型 → 跑 pass → 对比期望结果"：
+
+```python
+def test_conv_fusion():
+    mod = build_conv_relu_model()            # 构造 conv+relu 的 IRModule
+    mod = tvm.ir.transform.Sequential([
+        relax.transform.AnnotateTIROpPattern(),
+        relax.transform.FuseOps(),
+    ])(mod)
+    # 期望: 融合后 call_tir 的数量变少
+    assert count_fused_calls(mod) == 1       # 断言!
+```
+
+**你写测试时的铁律**：
+1. 先写**会失败的**测试（确认它真的能测出问题）
+2. 跑通你的修复
+3. 留一个**回归测试**（防止将来别人改坏）
+
+### 3.4 MLIR / LLVM 的测试（lit）
+
+如果你走 MLIR 方向，测试是 `lit`（文本匹配）：
+
+```mlir
+// RUN: mlir-opt %s -my-pass | FileCheck %s
+// CHECK: toy.transpose
+%0 = "toy.transpose"(%t) : ...
+```
+
+`// RUN:` 定义命令，`// CHECK:` 定义期望输出。**看到这两个注释 = 这是测试文件**。
+
+---
+
+## 4. 调试 pass——最常用的三招
+
+### 4.1 第一招：打印 IR（百试百灵）
+
+```python
+# 每个 pass 前后打印 IR, 看它改了什么
+from tvm.ir import transform
+with transform.PassContext(config={
+    "relax.transform.print_all": True,     # 打印每个 pass 前后的 IR
+}):
+    optimized = pipeline(mod)
+```
+
+**这就是第 9 课深拓展 B 说的"print_all"**。看到 pass 前后 IR 的差异，
+你就知道 pass 生效没、改对没。
+
+### 4.2 第二招：小步隔离
+
+"pass 组合拳"出问题，不知道是哪个 pass 干的 → 一个个跑：
+
+```python
+g1 = relax.transform.FuseOps()(mod)
+print(g1)               # 先只跑这一个, 看对不对
+g2 = relax.transform.FoldConstant()(g1)
+print(g2)               # 再叠下一个
+```
+
+**二分法**：`Sequential([a,b,c,d])` 出 bug → 试 `[a]`、`[a,b]`、
+`[a,b,c]`，定位是哪一步引入的错误。
+
+### 4.3 第三招：C++ 崩溃用 gdb
+
+Python 报错 + C++ 段错误（Segmentation fault）时：
+
+```bash
+# 在 gdb 下跑 python 脚本, 崩溃时看调用栈
+gdb --args python3 my_script.py
+# gdb 里: run      ← 运行
+#          bt       ← 崩溃时打印 backtrace(调用栈)
+#          up/down  ← 在栈里上下移动看帧
+```
+
+**调用栈（backtrace）怎么读**：从下往上，最下面是"谁发起的"，
+最上面是"崩在哪一行"。通常崩在 `as<>()` 强转失败（类型不对）或
+空指针解引用。
+
+### 4.4 数值不对 → 用参考执行器
+
+第 2 课的思想：写个 numpy 参考实现对比。TVM 里：
+
+```python
+tvm.testing.assert_allclose(compiled_out, reference_out, rtol=1e-4, atol=1e-5)
 ```
 
 ---
 
-## 4. 参考书目与资源（按优先级）
+## 5. git 协作——从"会用"到"专业"
 
-### 必读（先读这些）
-- TVM 官方教程（https://tvm.apache.org/docs/）
-- MLIR Toy 教程（https://mlir.llvm.org/docs/Tutorials/Toy/）
-- LLVM Kaleidoscope 教程（https://llvm.org/docs/tutorial/）
+你 git 熟练，这里只补充**开源编译器协作的特殊约定**：
 
-### 经典教材（选了深入方向再读）
-- 《编译原理》(龙书) —— 基础理论，跳着读
-- 《Computer Architecture: A Quantitative Approach》 —— 硬件，第 15 课延伸
-- 《Optimizing Compilers for Modern Architectures》 —— 优化与硬件结合
-- TVM 论文《TVM: An Automated End-to-End Optimizing Compiler for Deep Learning》
+### 5.1 提交信息风格（看项目 CONTRIBUTING）
 
-### 必逛的仓库
-- apache/tvm（主力）
-- llvm/llvm-project（LLVM + MLIR）
-- microsoft/onnxruntime（工业部署参考）
-- openai/triton（GPU kernel 语言，AI 编译新方向）
+```
+[Relax][Transform] Fuse ops more aggressively (#12345)
+ ^       ^            ^
+组件    子模块      一句话说明 (+PR号)
+```
+
+提交信息要**解释为什么**，不是复述代码干了啥。
+
+### 5.2 PR 检查清单
+
+- [ ] 代码有测试覆盖（没有测试的改动大概率被拒）
+- [ ] 跑过相关测试（`pytest tests/python/relax/...`）
+- [ ] 跑过格式检查（TVM 用 `pre-commit`，改完跑 `pre-commit run --all-files`）
+- [ ] 一个 PR 只做一件事
+- [ ] 写了清晰的 PR 描述（问题、方案、验证）
+
+### 5.3 处理 CI 失败
+
+PR 提交后 CI 跑全量测试，红了 → 点进去看哪一步挂了：
+- **lint 失败** → 格式问题，`pre-commit run --all-files` 修
+- **某个测试失败** → 本机 `pytest <那个测试>` 复现，修好重推
+- **超时/环境问题** → 可能是 CI 偶发，`@tvm-bot rerun`（或注释触发重跑）
 
 ---
 
-## 5. 六个月进阶计划（在课程基础上）
+## 6. 一个完整的"第一个任务"演练（跟着做）
 
-| 阶段 | 目标 | 产出 |
+假设任务：**"给融合 pass 加一条新规则：允许 `relu(sigmoid(x))` 也融合进 conv"**。
+
+### 步骤 1：定位代码
+
+```bash
+grep -rn "sigmoid" src/relax/transform/fuse_ops.cc   # 找到处理激活的地方
+```
+
+### 步骤 2：写一个会失败的测试
+
+```python
+# tests/python/relax/test_fusion_sigmoid.py
+def test_conv_sigmoid_fusion():
+    ...构造 conv → sigmoid 的图...
+    ...跑 FuseOps...
+    assert 融合后是一个 call_tir     # 先跑, 应该失败
+```
+
+### 步骤 3：实现
+
+在 `fuse_ops.cc` 的融合规则里，把 sigmoid 加入"可吸收的逐元素算子"集合，
+然后重新 `make`。
+
+### 步骤 4：跑测试直到通过
+
+```bash
+pytest tests/python/relax/test_fusion_sigmoid.py -v
+```
+
+### 步骤 5：跑相关回归（防止改坏别的）
+
+```bash
+pytest tests/python/relax/ -k "fuse or fusion"
+```
+
+### 步骤 6：提交 + PR
+
+```bash
+git add -A && git commit -m "[Relax][Transform] support sigmoid in fusion"
+git push origin my-fusion-sigmoid-branch
+# 去 GitHub 开 PR
+```
+
+**这就是真实任务的完整生命周期**。你第一次可能花一天，
+熟练后半小时一个。
+
+---
+
+## 7. 调试的进阶工具（遇到再学，不必现在全会）
+
+| 工具 | 干什么 | 什么时候用 |
 |---|---|---|
-| 第 1 月 | 做完第 10 课任务（maxpool/DCE）+ 跑通 tvm_demo | 提交记录/笔记 |
-| 第 2 月 | 精读 3 个 TVM pass + 各写 500 字笔记 | 笔记 3 篇 |
-| 第 3 月 | 用 meta_schedule tune 一个模型并对比收益 | 调优报告 |
-| 第 4 月 | 学完第 21~24 课，画出自家芯片工具链全景图 | 工具链架构图 + 笔记 |
-| 第 5 月 | 用 toycc 练手：为自家芯片写 target 描述 + 一个后端 | 可跑的最小后端 |
-| 第 6 月 | 选一个方向（MLIR/LLVM/性能/部署/芯片后端）深入 | 小项目 |
+| `perf` | 性能分析（热点在哪） | 优化 kernel 时 |
+| `valgrind` | 内存错误检测 | C++ 崩溃但 gdb 没头绪时 |
+| `nsight` / `ncu` | GPU 分析 | GPU kernel 优化时 |
+| `gdb` | 断点/回溯 | C++ 崩溃时 |
+| `pdb` | Python 断点 | Python 端逻辑问题时 |
+| `print` / `LOG` | 最朴素但最常用 | 任何时候 |
 
-> 注意：计划按"产出来定进度"，不是按时间。没做完就拉长，别赶。
-
----
-
-## 6. 面试 / 讨论时你该会的"回答模板"
-
-**"介绍一下 TVM 的编译流程"**
-> 前端把模型转成 Relax 图 → 图优化 pass（融合/布局/折叠/内存）→
-> FuseTIR 下降到 TIR → 调度（手写或 meta_schedule 自动）→
-> codegen 到目标 → 运行时（VM）执行。每步用参考执行器验证正确性。
-
-**"融合为什么能提速？"**
-> 省掉中间结果的写+读（内存带宽瓶颈）和核启动开销；
-> 但受寄存器压力限制，不是越多越好。
-
-**"布局为什么影响性能？"**
-> 缓存按行读取 + SIMD 需要数据连续；NHWC/NCHW4c 让卷积内层循环
-> "顺路"访问。布局沿图传播，只在边界插转换。
-
-**"你怎么保证 pass 没改错？"**
-> 参考执行器算 gold 结果，优化后对比 max|Δ| / assert_allclose；
-> 配合单元测试、随机测试、CI。
-
-**"你在编译器上做过什么？"**
-> 用 toycc 从零实现过融合/布局/折叠/内存/DCE/调度，验证正确性；
-> 给 TVM 写过自定义 pass；读过 fuse_ops.cc 等源码。
+**原则**：先用 `print` 快速定位，再用专业工具深挖。
+不要一上来就上 gdb/perf（工具本身有学习成本）。
 
 ---
 
-## 7. 结语
+## 8. 公司里常见的"开会/讨论"语言（再补一批）
 
-这门课的核心不是"教了你 16 课的知识"，而是给了你三样东西：
-
-1. **地图**：编译器从模型到硬件的完整链条（第 0/14 课）
-2. **方法**：代码驱动的读法、三遍读法、对照表法（贯穿全程）
-3. **动手**：toycc 是你能改、能跑、能验证的"练习场"
-
-**从这里出发，剩下的就是量变**：多读、多写、多跑测试。
-遇到不懂的概念，回 `glossary.md` 查；遇到读不懂的源码，
-用三遍读法 + 第 8 课的对照表。这条路你已经会走了。
-
-> 如果你走到了某一步卡住，随时可以回来——我可以陪你精读源码、
-> 一起调 bug、或帮你设计更深的练习。祝顺利！
+| 你听到 | 意思是 |
+|---|---|
+| "这 pr 能 merge 吗" | 能不能合并（CI 过了 + review 通过） |
+| "跑一下 sanity" | 快速跑一遍基本测试确认没崩 |
+| "regression" | 回归（改坏了过去的功能） |
+| "这个改动要不要 rebase" | 要不要把你的分支基于最新 main 重放 |
+| "LGTM" | Looks Good To Me（review 通过） |
+| "blocked by ..." | 被某件事卡住了 |
+| "nit" | 小问题（拼写/格式），不改也行 |
+| "candidate / RFC" | 设计方案征求意见 |
 
 ---
 
-## 深层拓展：怎么判断"我学得够不够"？
+## 9. 实验（本课没有自动实验，但给你一个自测）
 
-### A. 一个自测标准
+```bash
+python -m course.runner 16
+```
 
-不是"我看完了多少课"，而是**"我能不能在 5 分钟内解释清楚一个概念"**。
-随便挑一个词（比如"融合"、"布局传播"、"phi 节点"），你能不能：
-1. 一句话说清它是什么
-2. 说出它在 toycc 的哪个文件
-3. 说出它在真实 TVM/LLVM 里对应什么
+看到的是本课的要点清单。真正的"实验"是下面这个动手自测：
 
-能，就是真懂了；不能，就是"看过"而已。
+**自测：在 WSL 里完成一次最小闭环**
 
-### B. 知识地图是"活"的
+```bash
+# 1. 环境就绪(附录 B 通关)
+wsl --version && gcc --version
 
-这张地图不是看完就完——**你每做一个项目，就回来补一笔**。
-比如你第一次写了个 pass，就把"pass 开发"那一格从"了解"涂成"做过"。
-半年后回头看，你会惊讶自己走了多远。
+# 2. 能跑 toycc
+cd ~ && git clone <你的 toycc 路径> && python3 -m toycc.examples.demo
 
-### C. 深度 vs 广度的取舍
+# 3. 装 tvm 成功
+python3 -c "import tvm"
 
-自研芯片岗位，**深度比广度重要**。与其"什么都懂一点"，不如
-"硬件 + GPU 编译 + 工具链"这条线特别深。这张地图的价值，
-是让你**看清楚该在哪条线上加深**。
+# 4. 从源码编译(进阶)
+git clone --recursive https://github.com/apache/tvm tvm && cd tvm/build ...
+
+# 5. 跑一个测试
+pytest tests/python/relax/ -k "fuse" -x
+```
+
+**通关标准**：能说出"跑一个测试、看 CI 失败原因、改代码重推"
+这三步各自用什么命令。
 
 ---
 
-**导航**：⬅ [上一节](lesson15.md)（第 15 课 · 硬件必修课）　｜　[下一节](lesson17.md)（第 17 课 · 工程开发流程）➡
+## 10. FAQ
+
+**Q：编译一次 tvm 要多久？每次改代码都要重编吗？**
+A：第一次 10~30 分钟；之后增量编译只重编改动的部分，几十秒。
+改 Python 侧不需要重编；改 C++ 才需要 `make`。
+
+**Q：我该先学 C++ 还是先跑流程？**
+A：**先跑流程**（build/测试/跑通），过程中遇到 C++ 代码用附录 A 查。
+"先有环境能跑，再学语言"比"学完语言再动手"效率高得多。
+
+**Q：写测试重要吗？我不想写。**
+A：在开源编译器里**没有测试 = 不会合并**。测试是"你改动正确性"的证据，
+也是维护者的第一检查项。把"写测试"当"给自己上保险"，不是负担。
+
+**Q：我的 toycc 练习和真实 TVM 差距太大，怎么过渡？**
+A：先在 toycc 上把"改代码→跑验证"的循环做熟（第 10 课任务 A），
+再到真实 TVM 做同一件事（MyFirstPass）。逻辑一样，只是工具变了。
+**过渡的关键不是知识，是手感。**
+
+---
+
+## 11. 本课小结
+
+- 开发日常 = **改代码 → 跑测试 → 调 bug → 提 PR** 的循环
+- 从源码编译：clone → 配置(USE_LLVM) → cmake → make → pip -e
+- 测试：`pytest`（TVM） / `lit`（MLIR/LLVM），先写会失败的测试
+- 调试三招：**print IR → 小步隔离 → gdb 回溯**
+- git 协作：提交信息规范、PR 清单、CI 失败处理
+- 完成"第一个任务演练"六步 = 你已经能干活了
+
+**下一步**：第 17 课——模型是怎么"进"编译器的：前端导入、ONNX、
+legalize 下降、动态形状、运行时 VM。等学到第 20 课，再回来按
+知识地图选方向深入。
+需要我陪你走哪一步？可以一起从"WSL 环境搭建"或"第一个 TVM 任务"开始。
+
+---
+
+## 深层拓展：工程里的三个"软技能"
+
+### A. 怎么"读"一个你不懂的报错？
+
+报错信息永远是**从下往上读**：最下面一行是"哪里炸了"，往上是"谁调用的"。
+新手常犯的错误是从第一行开始读，被一堆模板/栈帧淹没。
+**先找最后一行的"error:"或"assert failed"**，再回头看调用链。
+
+### B. CI 挂了，怎么定位？
+
+CI 是"自动化测试"——挂了说明你的改动破坏了某个测试。步骤：
+1. 在本地**复现**（跑同一个测试命令）
+2. 如果本地不挂，多半是**环境差异**（版本/路径/依赖）
+3. 二分法：回退你的一半改动，看还挂不挂
+
+CI 不是敌人，是"帮你抓 bug 的同事"。
+
+### C. 什么时候该问人，什么时候该自己扛？
+
+经验法则：**卡住 30 分钟就求助**。但求助时不要说"我不会"，
+要说"我试了 A、B、C，卡在 D"——这既是尊重别人时间，
+也是梳理自己思路的过程。**会提问，是工程师的核心竞争力**。
+
+---
+
+**导航**：⬅ [上一节](lesson15.md)（第 15 课 · 硬件必修课）　｜　[下一节](lesson17.md)（第 17 课 · 模型导入）➡

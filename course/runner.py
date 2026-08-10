@@ -358,8 +358,8 @@ def lesson15():
     print("\n" + register_pressure_demo())
 
 
-def lesson16():
-    print("=== 第16课:知识地图(自测清单) ===")
+def lesson20():
+    print("=== 第20课:知识地图(自测清单) ===")
     print("""
 核心三支柱:  IR / Pass / 后端           [第1-7,14课]
 正确性:      参考执行器 + max|Δ|         [第2课]
@@ -370,12 +370,12 @@ def lesson16():
 参与开发:    git/PR/CI/讨论黑话          [第10,17课]
 
 五个进阶方向: TVM / MLIR / LLVM / 性能工程 / 部署
-完整地图和六阶段计划见 course/lesson16.md。
+完整地图和六阶段计划见 course/lesson20.md。
 """)
 
 
-def lesson17():
-    print("=== 第17课:真实工程开发流程 ===")
+def lesson16():
+    print("=== 第16课:真实工程开发流程 ===")
     print("""
 核心循环: 改代码 → 跑测试 → 调bug → 提PR
   build :  git clone --recursive apache/tvm → cmake → make -j
@@ -390,7 +390,7 @@ def lesson17():
   4. 从源码编译 tvm (进阶)
   5. pytest tests/python/relax/ -k "fuse" -x  # 跑一个测试
 
-细节(含"第一个任务六步演练")见 course/lesson17.md
+细节(含"第一个任务六步演练")见 course/lesson16.md
 前置: 附录A(C++) 附录B(WSL2环境)
 """)
 
@@ -409,8 +409,8 @@ def lesson18():
     print("结论: per-channel 优于 per-tensor; int4 误差大 10 倍。")
 
 
-def lesson19():
-    print("=== 第19课:模型怎么进编译器(前端/下降/动态形状/运行时) ===")
+def lesson17():
+    print("=== 第17课:模型怎么进编译器(前端/下降/动态形状/运行时) ===")
     print("""
 链条: 模型 → 前端导入 → 图优化 → legalize(下降) → TIR → codegen → 运行时
 关键点:
@@ -419,12 +419,12 @@ def lesson19():
   动态形状: T.Var 符号形状 → 形状特化 / 动态分派
   控制流 : if/while → 图从 DAG 变成 CFG (LLM 推理= while 循环)
   运行时 : VirtualMachine 解释指令序列, 管内存/设备/参数绑定
-完整内容见 course/lesson19.md。
+完整内容见 course/lesson17.md。
 """)
 
 
-def lesson20():
-    print("=== 第20课:性能度量与算子加速 ===")
+def lesson19():
+    print("=== 第19课:性能度量与算子加速 ===")
     print("""
 Roofline: 性能上限 = min(算力墙, 带宽墙 × 计算强度)
   计算强度 = 总FLOP / 总搬运字节
@@ -438,7 +438,7 @@ Benchmark 方法论: warmup → 测N次取中位数 → 注明测的是什么
   GEMM微内核: 分块 + 寄存器累加(6x8) + 向量化
 
 手算例子: 32x32 matmul 强度≈5.3 FLOP/Byte → 通常带宽受限
-完整内容见 course/lesson20.md。
+完整内容见 course/lesson19.md。
 """)
 
 

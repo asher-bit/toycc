@@ -156,7 +156,7 @@
 - **fp16 / bf16 / tf32**：低精度浮点格式（bf16 范围同 fp32，训练不溢出）。
 - **混合精度 (mixed precision)**：敏感层保留高精度，其余量化。
 
-## 模型导入与下降（第 19 课）
+## 模型导入与下降（第 17 课）
 
 - **前端 (Frontend)**：把 PyTorch/ONNX 模型翻译成编译器图 IR。
 - **ONNX**：模型交换标准格式；input / initializer（权重）/ node / output / opset。
@@ -165,7 +165,7 @@
 - **控制流 (control flow)**：模型里的 if/while，使 IR 从 DAG 变成 CFG。
 - **运行时 (Runtime) / VirtualMachine**：调度核、管内存、管设备；Relax 用 VM 解释指令序列。
 
-## 性能与算子（第 20 课）
+## 性能与算子（第 19 课）
 
 - **Roofline 模型**：性能上限 = min(算力墙, 带宽墙 × 计算强度)。
 - **计算强度 (arithmetic intensity)**：总 FLOP / 总搬运字节；判断 compute-bound vs memory-bound。
