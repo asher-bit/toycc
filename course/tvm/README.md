@@ -4,9 +4,9 @@
 
 ## 当前章节
 
-1. [`fuse_ops.cc`：Relax 算子融合源码详解](fuse_ops.md)
-2. [`fold_constant.cc`：Relax 常量折叠源码详解](fold_constant.md)
-3. [经典 Relax Pass 学习路线](pass_roadmap.md)
+1. [`fuse_ops.cc`：Relax 算子融合源码详解](../fuse_ops.md)
+2. [`fold_constant.cc`：Relax 常量折叠源码详解](../fold_constant.md)
+3. [经典 Relax Pass 学习路线](../pass_roadmap.md)
 
 ## 推荐阅读顺序
 

@@ -22,9 +22,9 @@
 
 **真实 TVM 源码精读专题**
 
-- [`fuse_ops.cc` · Relax 算子融合](tvm/fuse_ops.md)
-- [`fold_constant.cc` · Relax 常量折叠](tvm/fold_constant.md)
-- [经典 Relax Pass 学习路线](tvm/pass_roadmap.md)
+- [`fuse_ops.cc` · Relax 算子融合](fuse_ops.md)
+- [`fold_constant.cc` · Relax 常量折叠](fold_constant.md)
+- [经典 Relax Pass 学习路线](pass_roadmap.md)
 - [专题目录](tvm/README.md)
 
 **④ 上手与进阶**

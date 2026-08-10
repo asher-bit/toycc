@@ -6,9 +6,9 @@
 
 本课是源码阅读方法和整体结构课。需要逐行精读时，进入本部分的专题页：
 
-- [`fuse_ops.cc` 源码详解](tvm/fuse_ops.md)
-- [`fold_constant.cc` 源码详解](tvm/fold_constant.md)
-- [经典 Relax Pass 学习路线](tvm/pass_roadmap.md)
+- [`fuse_ops.cc` 源码详解](fuse_ops.md)
+- [`fold_constant.cc` 源码详解](fold_constant.md)
+- [经典 Relax Pass 学习路线](pass_roadmap.md)
 
 ---
 

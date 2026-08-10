@@ -8,7 +8,7 @@
 
 - [`fuse_ops.cc` 源码详解](fuse_ops.md)
 - [`fold_constant.cc` 源码详解](fold_constant.md)
-- [专题目录与推荐阅读顺序](README.md)
+- [专题目录与推荐阅读顺序](tvm/README.md)
 
 ## 为什么选择这些 Pass
 
