@@ -289,6 +289,32 @@ def topo_order(self) -> list[Node]:
 > `conv1` 入度 0 → 先执行；`bias_add1` 依赖 conv1，减到 0 → 再执行；
 > `relu1` 同理。顺序就是链的顺序。
 
+> **手算：拿真实模型完整走一遍 Kahn 算法**
+>
+> 取模型里的 6 个节点：`conv1(x, conv1_w)`, `bias_add1(conv1, bias1)`,
+> `relu1(bias_add1)`, `conv2(relu1, conv2_w)`, `bias_add2(conv2, bias2)`,
+> `relu2(bias_add2)`。注意 `x`/`conv1_w`/`bias1` 是图输入，不计入度。
+>
+> ```
+> 初始入度: conv1=0, bias_add1=1, relu1=1, conv2=1, bias_add2=1, relu2=1
+> ready=[conv1]
+>
+> 弹 conv1  → 顺序[conv1]
+>   conv1 是 bias_add1 的输入 → bias_add1 入度 1→0 → ready=[bias_add1]
+> 弹 bias_add1 → 顺序[conv1, bias_add1]
+>   relu1 入度 1→0 → ready=[relu1]
+> 弹 relu1 → 顺序[conv1, bias_add1, relu1]
+>   conv2 入度 1→0 → ready=[conv2]
+> 弹 conv2 → [conv1, bias_add1, relu1, conv2]
+>   bias_add2 入度 1→0 → ready=[bias_add2]
+> 弹 bias_add2 → [..., bias_add2]  → relu2 入度 1→0
+> 弹 relu2 → 全部 6 个节点出列 ✓
+> ```
+>
+> 每一轮都保证一件事：**出列的节点，它的输入一定已经算完了**。
+> 这就是拓扑序的全部含义。真实 TVM 里 2000+ 个节点的图也是同一个算法，
+> 只是把"遍历所有节点找消费者"换成邻接表，从 O(N²) 优化到 O(N)。
+
 #### ③ dump：把图"画"给人看
 
 ```python
