@@ -1,6 +1,6 @@
 # toycc —— 迷你 AI 编译器 + 完整教学课程
 
-一个几百行的可运行 AI 编译器骨架，以及配套的 20 课手把手课程。
+一个几百行的可运行 AI 编译器骨架，以及配套的 30 课手把手课程。
 **它模仿 TVM 的架构**，用来学"AI 编译器到底在做什么"，然后能读得懂真实源码、参与开发。
 
 ## 快速开始
@@ -23,13 +23,13 @@ toycc/          迷你 AI 编译器（模仿 TVM 架构）
 ├── runtime/    numpy 参考执行器（正确性裁判）
 ├── schedule.py TIR 调度模拟器
 └── hardware.py 缓存/延迟硬件模型
-course/         20 课 + 3 附录 + 词汇表（Markdown 教学课程）
+course/         30 课 + 3 附录 + 词汇表（Markdown 教学课程）
 ```
 
 ## 课程内容
 
 覆盖：IR/Pass/后端、算子融合、布局优化、常量折叠、内存规划、代码生成、
-真实 TVM 源码精读、TIR 调度、优化全景、自动调度（meta_schedule）、
+真实 TVM 源码精读、Relax Pass 源码路线、TIR 调度、优化全景、自动调度（meta_schedule）、
 LLVM/MLIR/PTX、硬件基础、量化、模型导入、性能加速、工程开发流程。
 
 详细学习路径见 `course/README.md`。
