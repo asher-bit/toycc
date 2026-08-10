@@ -52,6 +52,13 @@
 - [第 25 课 · LLVM 深入](lesson25.md)
 - [第 26 课 · MLIR 深入](lesson26.md)
 
+**⑨ TVM Relax Pass 源码精读**
+
+- [第 27 课 · FuseOps 源码详解](lesson27.md)
+- [第 28 课 · FoldConstant 源码详解](lesson28.md)
+- [第 29 课 · 经典 Relax Pass 学习路线](lesson29.md)
+- [Relax Pass 课程目录](relax_pass_index.md)
+
 **附录**
 
 - [附录 A · C++ 阅读手册](appendix_cpp.md)

@@ -4,9 +4,9 @@
 
 ## 当前章节
 
-1. [FuseOps：Relax 算子融合源码详解](TVM_Relax_FuseOps课程章节.md)
-2. [FoldConstant：Relax 常量折叠源码详解](TVM_Relax_FoldConstant课程章节.md)
-3. [Relax Pass 学习路线与经典 Pass 课程](TVM_Relax_Pass学习路线.md)
+1. [第 27 课：FuseOps——Relax 算子融合源码详解](lesson27.md)
+2. [第 28 课：FoldConstant——Relax 常量折叠源码详解](lesson28.md)
+3. [第 29 课：Relax Pass 学习路线与经典 Pass 课程](lesson29.md)
 
 ## 推荐阅读顺序
 

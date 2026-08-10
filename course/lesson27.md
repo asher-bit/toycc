@@ -1,6 +1,6 @@
-# TVM Relax 算子融合课程
+# 第 27 课：TVM Relax 算子融合源码详解
 
-## 第 1 章：`src/relax/transform/fuse_ops.cc` 源码详解
+## 1. `src/relax/transform/fuse_ops.cc` 源码详解
 
 > 本章对应 Apache TVM `main` 分支中的 `src/relax/transform/fuse_ops.cc`。
 > 源码链接：[fuse_ops.cc](https://github.com/apache/tvm/blob/main/src/relax/transform/fuse_ops.cc)

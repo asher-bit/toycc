@@ -4,10 +4,11 @@
 
 这是一套面向 TVM Relax 编译器开发者的 Pass 源码阅读课程。课程目标不是背 API，而是建立一条从 Relax IR、分析、重写、算子 lowering、融合到后端代码生成的完整链路。
 
-当前课程已经包含：
+本专题已经包含：
 
-- [第 1 章：`fuse_ops.cc` 源码详解](TVM_Relax_FuseOps课程章节.md)
-- [第 2 章：`fold_constant.cc` 源码详解](TVM_Relax_FoldConstant课程章节.md)
+- [第 27 课：`fuse_ops.cc` 源码详解](lesson27.md)
+- [第 28 课：`fold_constant.cc` 源码详解](lesson28.md)
+- [课程目录与推荐阅读顺序](relax_pass_index.md)
 
 ## 为什么选择这些 Pass
 
