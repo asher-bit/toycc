@@ -512,13 +512,55 @@ def lesson24():
 """)
 
 
+def lesson25():
+    print("=== 第25课:LLVM 深入 ===")
+    print("""
+llvm-project = 一整套基础设施: IR + 优化器 + 后端框架 + MC
+
+LLVM IR 深入:
+  基本块 + phi 节点    控制流(if/while 降到这层)
+  getelementptr(GEP)  纯地址计算, 不读内存
+  属性(attributes)     编译器之间的优化提示
+
+pass 体系: 分析/变换分离 + 新 pass 管理器(PreservedAnalyses 缓存)
+
+后端流水线:
+  指令选择(TableGen) → 指令调度 → 寄存器分配(图着色) → MC 编码
+
+MC 层 = 写汇编器的标准框架:
+  TableGen 描述指令 → 自动生成 汇编器/反汇编器/目标文件
+详细见 course/lesson25.md
+""")
+
+
+def lesson26():
+    print("=== 第26课:MLIR 深入 ===")
+    print("""
+MLIR = 可扩展的多层 IR 框架, 一切皆是 Operation
+
+核心概念:
+  方言(dialect)  给每层抽象起名字 (linalg/affine/scf/memref/llvm)
+  region         操作里能装控制流(for/if 是带 region 的操作)
+  ODS/TableGen   声明式定义算子, 自动生成 C++/打印/校验
+  pattern rewrite  优化/下降/合法化三位一体的 pass 写法
+
+渐进式下降链(以 conv 为例):
+  tosa.conv → linalg → affine/scf → memref → llvm 方言 → LLVM IR
+  每跳都是 pattern rewrite, 每步都是合法 MLIR
+
+自研芯片: MLIR 做前端/高层, 后端可接 LLVM(第25课)
+详细见 course/lesson26.md
+""")
+
+
 LESSONS = {
     1: lesson01, 2: lesson02, 3: lesson03, 4: lesson04,
     5: lesson05, 6: lesson06, 7: lesson07, 8: lesson08, 9: lesson09,
     10: lesson10, 11: lesson11, 12: lesson12, 13: lesson13,
     14: lesson14, 15: lesson15, 16: lesson16, 17: lesson17,
     18: lesson18, 19: lesson19, 20: lesson20, 21: lesson21,
-    22: lesson22, 23: lesson23, 24: lesson24,
+    22: lesson22, 23: lesson23, 24: lesson24, 25: lesson25,
+    26: lesson26,
 }
 
 

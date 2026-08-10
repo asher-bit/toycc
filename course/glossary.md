@@ -128,6 +128,24 @@
 - **BYOC**：Bring Your Own Codegen，外部后端接入机制。
 - **target description**：告诉编译器芯片特性（寄存器/共享内存/线程数）的描述表。
 
+## LLVM / MLIR 深入（第 25-26 课）
+
+- **基本块 (basic block)**：LLVM IR 里"内部顺序执行、无分支"的代码块，块间用跳转连接。
+- **phi 节点**：SSA 在汇合点的取值选择——"从 then 块来就是 a，从 else 块来就是 b"。
+- **getelementptr (GEP)**：LLVM 的纯地址计算指令，只算地址不读内存。
+- **Pass 管理器 (New PM)**：LLVM 调度 pass 的框架；`PreservedAnalyses` 告诉它哪些分析还作数。
+- **指令选择 (instruction selection)**：把 LLVM IR 映射成目标指令候选的过程。
+- **寄存器分配 (register allocation)**：虚拟寄存器→物理寄存器，图着色，装不下就 spill。
+- **MC 层**：LLVM 最底层库，提供指令内存表示、汇编器、反汇编器、目标文件输出。
+- **TableGen (.td)**：声明式描述指令/算子的语言，自动生成 C++ 代码。
+- **方言 (dialect)**：MLIR 里"一层抽象"的命名空间（linalg/affine/scf/memref/llvm 等）。
+- **Operation**：MLIR 的统一单元——所有算子/指令都是 Operation，高层低层可共存。
+- **region**：MLIR 操作里嵌套的代码块（for/if 就是带 region 的操作）。
+- **ODS**：Operation Definition Specification，用 TableGen 定义 MLIR 算子。
+- **pattern rewrite**：MLIR 的 pass 核心机制，优化/下降/合法化三位一体。
+- **渐进式下降 (progressive lowering)**：一层层降，每步都是合法 IR，降不了的留给下一跳。
+- **greedy driver**：反复应用 pattern 直到没有可改的驱动器。
+
 ## 量化与精度（第 18 课）
 
 - **量化 (Quantization)**：把 float 转成 int8 等低精度，内存/带宽减 4 倍 + int8 加速单元。

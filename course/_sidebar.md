@@ -47,6 +47,11 @@
 - [第 23 课 · Kernel 与性能分析](lesson23.md)
 - [第 24 课 · 自研 GPU 工具链](lesson24.md)
 
+**⑧ LLVM / MLIR 深入**
+
+- [第 25 课 · LLVM 深入](lesson25.md)
+- [第 26 课 · MLIR 深入](lesson26.md)
+
 **附录**
 
 - [附录 A · C++ 阅读手册](appendix_cpp.md)
