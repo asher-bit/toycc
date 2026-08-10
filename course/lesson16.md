@@ -94,6 +94,25 @@ python3 -c "from tvm import relax; print(relax.__name__)"   # 确认 relax 在
 - 内存不够（编译会吃很多）→ 加 `-j$(nproc-2)` 减少并行度
 - 改了 C++ 源码 → 回到 `build` 目录 `make -j$(nproc)`，python 端自动生效
 
+> **原理深挖：为什么编译器项目不能"pip 一键装"？**
+>
+> pip 装的 TVM 是**预编译产物**——别人在某个硬件上编好的，你只是"下载使用"。
+> 这对"用"够了，但对"改"是致命的：你改了 `fuse_ops.cc`，pip 包里的
+> 二进制还是老代码，改了等于没改。
+>
+> 所以开发模式必须**从源码构建**，它的本质是一个"你自己的产物"流程：
+>
+> ```
+> 源码(C++) ──编译(cmake+make)──> 动态库 libtvm.so ──> Python 绑定(import tvm)
+>     改一行代码 ── 重新 make ── 动态库更新 ── Python 端立刻生效
+> ```
+>
+> 这也解释了为什么 TVM 有 100+ 个 `USE_*` 配置开关（LLVM / CUDA / OpenCL...）：
+> **同一个源码，不同环境编出不同的库**。`USE_LLVM=ON` 就是把 LLVM 那个
+> 巨大依赖编进去——编译器的工作方式就是"把要做后端（第 25 课 LLVM）时
+> 才需要的东西，在编译期决定好"。这和你在第 5 课学的"编译期 vs 运行时"
+> 是同一件事，只不过发生在**构建系统**里。
+
 ---
 
 ## 3. 跑测试——你的安全网
@@ -202,6 +221,26 @@ gdb --args python3 my_script.py
 **调用栈（backtrace）怎么读**：从下往上，最下面是"谁发起的"，
 最上面是"崩在哪一行"。通常崩在 `as<>()` 强转失败（类型不对）或
 空指针解引用。
+
+> **手算：拿一段真实风格的回溯练读法**
+>
+> ```
+> #0  0x... in tvm::relax::FuseOpsImpl::GetOpPattern(OpPatternKind*) 
+> #1  0x... in tvm::relax::FuseOpsImpl::FuseOps() 
+> #2  0x... in tvm::relax::transform::FuseOps(IRModule) 
+> #3  0x... in tvm::runtime::TypedPackedFunc<...>::Call()   ← Python 入口
+> #4  0x... in PyCFunc_  ← 从 Python 调进 C++ 的桥
+> ```
+>
+> 读法三步：
+> 1. **看 #0（最上层）**：崩在 `GetOpPattern`——说明"取融合模式"这一步
+>    拿到一个空/非法对象（多半是 `as<>()` 强转失败：Add 被当成别的算子）。
+> 2. **往下走 #1**：`FuseOps()` 调用它——确认是融合 pass 主流程。
+> 3. **看 #4（最底层）**：从 Python 进来——确认不是 C++ 端独立崩溃。
+>
+> 结论就一句话：**融合 pass 里对某个算子的"类型假设"错了**。修复方向：
+> 在 `GetOpPattern` 里对未知算子类型加判断（对照第 1 课 `__post_init__`
+> 的"尽早报错"哲学——C++ 侧同样要"谁知道就校验谁"）。
 
 ### 4.4 数值不对 → 用参考执行器
 
