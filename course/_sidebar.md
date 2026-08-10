@@ -57,6 +57,22 @@
 - [第 25 课 · LLVM 深入](lesson25.md)
 - [第 26 课 · MLIR 深入](lesson26.md)
 
+**LLVM 深入专题（分章）**
+
+- [LLVM 专题首页](llvm/README.md)
+- [第 1 章 · LLVM IR、SSA 与验证器](llvm/01_ir_ssa.md)
+- [第 2 章 · Analysis、Pass 与新 Pass Manager](llvm/02_analysis_passes.md)
+- [第 3 章 · 写 Pass、接入 opt 与测试](llvm/03_write_pass_and_tests.md)
+- [第 4 章 · 后端、ABI、TableGen 与 MC](llvm/04_backend_abi_mc.md)
+
+**MLIR 深入专题（分章）**
+
+- [MLIR 专题首页](mlir/README.md)
+- [第 1 章 · Operation、Region、Block 与 Value](mlir/01_ir_core.md)
+- [第 2 章 · Dialect、ODS 与 TableGen](mlir/02_dialect_ods.md)
+- [第 3 章 · Pattern Rewrite 与 Dialect Conversion](mlir/03_rewrite_and_conversion.md)
+- [第 4 章 · Bufferization、Lowering 与测试](mlir/04_bufferize_lowering_tests.md)
+
 **附录**
 
 - [附录 A · C++ 阅读手册](appendix_cpp.md)

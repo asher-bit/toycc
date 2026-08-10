@@ -4,6 +4,10 @@
 > 下降链讲透，最后落到"自研芯片要不要用 MLIR"。
 > 前置：第 14 课（IR 家族）、第 25 课（LLVM 深入）、附录 A（C++）。
 
+> 想继续深入，请按章节学习：[MLIR 深入专题](mlir/README.md)：
+> [IR 核心对象](mlir/01_ir_core.md) → [Dialect/ODS](mlir/02_dialect_ods.md) →
+> [Rewrite/Conversion](mlir/03_rewrite_and_conversion.md) → [Bufferization/Lowering/测试](mlir/04_bufferize_lowering_tests.md)。
+
 ---
 
 ## 1. 先回答一个问题：LLVM 一层不够用吗？

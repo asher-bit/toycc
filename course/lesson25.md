@@ -5,6 +5,10 @@
 > 自研 GPU 芯片要不要写汇编器？用 LLVM MC 能省 80% 的活。
 > 前置：第 14 课（IR 家族）、第 24 课（工具链全景）、附录 A（C++）。
 
+> 想继续深入，请按章节学习：[LLVM 深入专题](llvm/README.md)：
+> [IR/SSA](llvm/01_ir_ssa.md) → [Analysis/Pass](llvm/02_analysis_passes.md) →
+> [写 Pass 与测试](llvm/03_write_pass_and_tests.md) → [后端/ABI/MC](llvm/04_backend_abi_mc.md)。
+
 ---
 
 ## 1. 先破除一个误解："LLVM"不是一个编译器

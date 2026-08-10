@@ -112,6 +112,15 @@
 | 25 | **LLVM 深入** | 基本块/phi、pass 体系、后端流水线、MC 层写汇编器 | `runner 25` |
 | 26 | **MLIR 深入** | 方言/ODS/TableGen、pattern rewrite、渐进式下降链 | `runner 26` |
 
+### LLVM / MLIR 源码与实践分章
+
+第 25、26 课是总览；下面的专题把内容继续拆成可逐章完成的源码与实践课程：
+
+- [LLVM 深入专题](llvm/README.md)：IR/SSA → Analysis/Pass → 写 Pass 与测试 → 后端/ABI/MC；
+- [MLIR 深入专题](mlir/README.md)：IR 核心对象 → Dialect/ODS → Rewrite/Conversion → Bufferization/Lowering/测试。
+
+每章都包含学习目标、源码阅读地图、最小代码片段、命令实验和练习题。
+
 ### 附录（随时查）
 
 | 附录 | 内容 | 什么时候用 |
