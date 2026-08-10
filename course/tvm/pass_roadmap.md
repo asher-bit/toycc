@@ -1,4 +1,4 @@
-# TVM Relax Pass 源码学习课程
+# TVM Relax 源码精读专题：Pass 学习路线
 
 ## 课程定位
 
@@ -6,9 +6,9 @@
 
 本专题已经包含：
 
-- [第 27 课：`fuse_ops.cc` 源码详解](lesson27.md)
-- [第 28 课：`fold_constant.cc` 源码详解](lesson28.md)
-- [课程目录与推荐阅读顺序](relax_pass_index.md)
+- [`fuse_ops.cc` 源码详解](fuse_ops.md)
+- [`fold_constant.cc` 源码详解](fold_constant.md)
+- [专题目录与推荐阅读顺序](README.md)
 
 ## 为什么选择这些 Pass
 

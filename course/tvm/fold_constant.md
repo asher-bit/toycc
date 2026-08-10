@@ -1,6 +1,6 @@
-# 第 28 课：TVM Relax 常量折叠源码详解
+# TVM Relax 源码精读专题：`fold_constant.cc`
 
-## 1. `src/relax/transform/fold_constant.cc` 源码详解
+## 专题说明
 
 > 本章对应 Apache TVM `main` 分支中的 `src/relax/transform/fold_constant.cc`。
 > 源码链接：[fold_constant.cc](https://github.com/apache/tvm/blob/main/src/relax/transform/fold_constant.cc)

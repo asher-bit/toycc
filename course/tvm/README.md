@@ -1,12 +1,12 @@
-# TVM Relax Pass 源码课程目录
+# 真实 TVM 源码精读专题目录
 
 这套课程围绕 Relax 编译器中的经典 Pass 展开，按照“IR 基础 → 分析清理 → 常量与重写 → Legalize → 融合 → TIR → Codegen”的顺序学习。
 
 ## 当前章节
 
-1. [第 27 课：FuseOps——Relax 算子融合源码详解](lesson27.md)
-2. [第 28 课：FoldConstant——Relax 常量折叠源码详解](lesson28.md)
-3. [第 29 课：Relax Pass 学习路线与经典 Pass 课程](lesson29.md)
+1. [`fuse_ops.cc`：Relax 算子融合源码详解](fuse_ops.md)
+2. [`fold_constant.cc`：Relax 常量折叠源码详解](fold_constant.md)
+3. [经典 Relax Pass 学习路线](pass_roadmap.md)
 
 ## 推荐阅读顺序
 

@@ -4,6 +4,12 @@
 > 源码位置：`apache/tvm` 仓库 `src/relax/transform/`（当前 main 分支是 Relax 时代）
 > 准备：跑 `python -m course.runner 8` 看对照清单。
 
+本课是源码阅读方法和整体结构课。需要逐行精读时，进入本部分的专题页：
+
+- [`fuse_ops.cc` 源码详解](tvm/fuse_ops.md)
+- [`fold_constant.cc` 源码详解](tvm/fold_constant.md)
+- [经典 Relax Pass 学习路线](tvm/pass_roadmap.md)
+
 ---
 
 ## 1. 为什么要"读源码"？——你现在的能力已经够了
