@@ -278,6 +278,7 @@ https://github.com/apache/tvm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good-firs
 第 15~19 课   系统: 硬件 / 工程 / 导入 / 量化 / 性能
 第 20 课     盘点: 知识地图(查缺补漏)
 第 21~26 课  岗位: GPU 专项 + LLVM/MLIR
+第 27~30 课  地基: 模拟器 / 并发原语 / 二进制 / 驱动(流片前四柱)
 ```
 
 **每个方向的下一步**（等你读完对应课后回来执行）：
@@ -285,6 +286,7 @@ https://github.com/apache/tvm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good-firs
 - 量化：读 `relax/transform` 里量化相关 pass（第 18 课）
 - 后端：读 `src/target/`、看一个 codegen 怎么实现（第 24 课）
 - GPU：CUDA 编程手册 + 第 21~24 课实验
+- 模拟器：给 toycc-ISA 写一个 30 行 ISS + 差分测试（第 27 课）
 
 ---
 

@@ -73,6 +73,13 @@
 - [第 3 章 · Pattern Rewrite 与 Dialect Conversion](mlir/03_rewrite_and_conversion.md)
 - [第 4 章 · Bufferization、Lowering 与测试](mlir/04_bufferize_lowering_tests.md)
 
+**⑨ 工具链四柱（岗位专属）**
+
+- [第 27 课 · 模拟器](lesson27.md)
+- [第 28 课 · 内存模型与并发](lesson28.md)
+- [第 29 课 · 二进制与加载](lesson29.md)
+- [第 30 课 · 驱动与命令提交](lesson30.md)
+
 **附录**
 
 - [附录 A · C++ 阅读手册](appendix_cpp.md)

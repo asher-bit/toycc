@@ -173,3 +173,21 @@
 - **Winograd**：小卷积（3×3）用加法换乘法，省 50%+ 乘法。
 - **GEMM 微内核**：分块 + 寄存器累加 + 向量化 + 双缓冲的极致优化。
 - **benchmark 方法论**：warmup + 多次取中位数 + 同条件对比 + 区分延迟/吞吐。
+
+## 工具链四柱（第 27~30 课）
+
+- **模拟器 (Simulator)**：ISA 规范的可执行版本；流片前编译器/调试器/autotune 全跑在它上面。
+- **ISS (Instruction Set Simulator)**：功能模型，逐条执行指令语义（不管时序），回答"对不对"。
+- **周期模型 (Cycle Model)**：近似模拟流水线/缓存/带宽/占用率，回答"快不快"（解析式 vs 逐周期）。
+- **差分测试 (differential testing)**：随机程序喂给"被测实现 + 独立参考实现"，比对终态；覆盖率门禁是模拟器 CI 的底线。
+- **原子操作 (atomic)**：读-改-写一步完成（atom.add/cas/exch/max），冲突在 L2 原子单元串行化。
+- **内存栅栏 (fence)**：屏障指令；fence 前的访存全部生效后，fence 后的才允许开始。
+- **弱内存序 (weak memory model)**：默认访存可重排，需要时用 release/acquire 显式声明；吞吐优先的设计决策。
+- **bar.sync / __syncthreads**：block 内全员到齐才放行的屏障；必须放"全员必经路径"，否则死锁。
+- **流 (stream) / 事件 (event)**：stream=有序命令序列（不同流可并行）；event=跨流同步点。
+- **重定位 (relocation)**：链接器把目标文件里的符号占位填成真实地址（(段内偏移, 符号名, 类型)）。
+- **fatbin / cubin**：cubin=含 SASS+kernel 元数据的 ELF 变体；fatbin=多代 cubin+PTX"源码"的打包容器。
+- **运行时 JIT**：拿着 PTX 在设备上现场编译出新 SASS（前向兼容策略），按哈希缓存到磁盘。
+- **门铃 (doorbell)**：CPU 写完命令队列后写 MMIO 通知 GPU 的机制（替代轮询，省功耗）。
+- **GPU MMU / 页表**：GPU 自己的地址翻译单元；隔离 + 惰性分配 + 统一寻址（UVA）的基础。
+- **性能计数器 (PMC)**：SM 内的硬件计数器；profiler 的全部指标都来自它。

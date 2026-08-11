@@ -553,6 +553,75 @@ MLIR = 可扩展的多层 IR 框架, 一切皆是 Operation
 """)
 
 
+def lesson30():
+    print("=== 第30课:驱动与命令提交 ===")
+    print("""
+CPU → GPU 的命令提交(每 launch 的固定开销):
+  用户态命令构造  ~1 us
+  系统调用        ~1~3 us
+  门铃+硬件响应   ~0.5 us
+  ────────────────
+  合计 ~3~5 us/launch
+
+如果 kernel 只跑 2 us → 实测吞吐 28%(70% 时间在发射没在算)
+解法: 持久 kernel / 命令合并(cuGraph) / 编译器融合(第3课)
+
+内存管理: GPU 有自己的 MMU 页表 → 隔离 + 惰性分配 + UVA
+  频繁小分配 ≈ 2~5us/次 → 内存池解决(第6课思想的运行时版)
+
+上下文三件套: context(隔离) / stream(并行) / event(同步)
+详细见 course/lesson30.md
+""")
+
+
+def lesson29():
+    print("=== 第29课:二进制格式与模块加载 ===")
+    print("""
+编译产物最后一公里:
+  汇编 → 目标文件(ELF) → 链接(重定位) → 加载 → 运行
+
+GPU 特殊:
+  cubin  = ELF 变体 + kernel 元数据(网格/寄存器/共享内存)
+  fatbin = 多代 cubin + PTX"源码"(前向兼容: PTX→新芯片 JIT 重编)
+  策略  = 承诺"稳定中间层"兼容, 不承诺机器码兼容
+
+自研芯片四件套: 指令编码规范 / 镜像格式 / 加载器 / 稳定中间层
+详细见 course/lesson29.md
+""")
+
+
+def lesson28():
+    print("=== 第28课:GPU内存模型与并发原语 ===")
+    print("""
+并发三问:
+1. 丢更新: ld/add/st 三步可被插入 → atom.add 一步不可分割
+2. 乱序:   不同地址的访存可重排 → fence/release-acquire 成对
+3. 死锁:   bar.sync 必须全员必经路径, 放条件分支里 = 卡死
+
+GPU 弱内存序 = 吞吐优先的设计决策(默认宽松, 显式同步自费)
+
+同步层级: warp(锁步) → block(bar.sync) → grid → host(event)
+自研 ISA 内存模型章: 原子集 + 内存序 + fence + bar + 事件
+详细见 course/lesson28.md
+""")
+
+
+def lesson27():
+    print("=== 第27课:模拟器 ===")
+    print("""
+模拟器 = ISA 规范的可执行版本, 工具链第一件交付物
+
+三层模型:
+  功能模型(ISS)  指令精确   ~1e8 条/秒   回答"对不对"
+  周期模型       周期近似   ~1e6 条/秒   回答"快不快"
+  RTL 仿真       信号精确   ~1e4 条/秒   回答"电路对不对"
+
+验证: 差分测试(独立参考实现 + 覆盖率门禁)
+调试: 编译器输出 → 加载器 → 模拟器 ← 调试器挂断点
+详细见 course/lesson27.md
+""")
+
+
 LESSONS = {
     1: lesson01, 2: lesson02, 3: lesson03, 4: lesson04,
     5: lesson05, 6: lesson06, 7: lesson07, 8: lesson08, 9: lesson09,
@@ -560,7 +629,8 @@ LESSONS = {
     14: lesson14, 15: lesson15, 16: lesson16, 17: lesson17,
     18: lesson18, 19: lesson19, 20: lesson20, 21: lesson21,
     22: lesson22, 23: lesson23, 24: lesson24, 25: lesson25,
-    26: lesson26,
+    26: lesson26, 27: lesson27, 28: lesson28, 29: lesson29,
+    30: lesson30,
 }
 
 
