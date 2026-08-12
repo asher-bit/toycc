@@ -1,8 +1,11 @@
-# 第 8 课：真实 TVM（上）——学会读一份 1500 行的 pass 源码
+# 第 8 课：真实 TVM ①——如何阅读一个工业级 Pass
 
-> 本课风格：先教方法论，再用方法论精读 `fuse_ops.cc` 和 `fold_constant.cc`。
+> 前 7 课我们一直在 toycc 里看 IR、Pass 和代码生成。本课把视线转向真实 TVM，学习如何在一个更大的工程中定位入口、识别职责和建立局部理解。
+> 本课先讲源码阅读方法，再用它分析 `fuse_ops.cc` 和 `fold_constant.cc`。
 > 源码位置：`apache/tvm` 仓库 `src/relax/transform/`（当前 main 分支是 Relax 时代）
 > 准备：跑 `python -m course.runner 8` 看对照清单。
+
+> **完成标准**：你不需要记住每个 API，但要能说明一个 Pass 的入口、遍历对象、核心变换、分析依赖和测试方式。
 
 本课是源码阅读方法和整体结构课。需要逐行精读时，进入本部分的专题页：
 
@@ -335,7 +338,7 @@ https://github.com/apache/tvm/blob/main/src/relax/transform/fold_constant.cc
 
 ---
 
-## 7. FAQ
+## 7. 课后答疑
 
 **Q：为什么不直接学 TVM，还要先写 toycc？**
 A：toycc 是"无装饰的地图"——每行代码都能对应一个概念。直接啃 TVM，
@@ -370,7 +373,7 @@ A：`relax.transform.FuseOps()` 返回一个 Pass 对象，放进
 
 ---
 
-## 9. 深层拓展 A：TVM 源码树怎么逛？（导航地图）
+## 9. 扩展阅读 A：TVM 源码树怎么逛？（导航地图）
 
 第一次打开 `github.com/apache/tvm` 会懵。给你一张导航地图：
 
@@ -400,7 +403,7 @@ apache/tvm
 
 ---
 
-## 10. 深层拓展 B：FFI——Python 怎么调 C++（TVM 的血管）
+## 10. 扩展阅读 B：FFI——Python 怎么调 C++（TVM 的连接层）
 
 你在 Python 里写 `relax.transform.FuseOps()`，但实现是 C++ 的 `fuse_ops.cc`。
 怎么连起来的？靠 **FFI（Foreign Function Interface）**。
@@ -427,7 +430,7 @@ TVM 的 FFI 是一个**全局注册表**：C++ 侧 `TVM_REGISTER_GLOBAL("relax.F
 
 ---
 
-## 11. 深层拓展 C：在 1500 行文件里快速定位（grep 功夫）
+## 11. 扩展阅读 C：在 1500 行文件里快速定位（grep 方法）
 
 读大文件的三遍法里，"结构扫读"要靠搜索。给你一套实用命令：
 

@@ -177,7 +177,7 @@ __global__ void matmul_naive(float* A, float* B, float* C, int M, int N, int K) 
 >
 > **规则**：profiler 不是"看一坨数字"，它是**假设检验工具**——
 > 你先说出"我猜瓶颈在 X"，profiler 给证据，改完再测看指标是否移动。
-> 永远"改一处、测一次"（深层拓展 A）。
+> 永远“改一处、测一次”（见本课的扩展阅读 A）。
 
 ---
 
@@ -213,7 +213,7 @@ __global__ void matmul_naive(float* A, float* B, float* C, int M, int N, int K) 
 
 ---
 
-## 6. FAQ
+## 6. 课后答疑
 
 **Q：我应该手写 kernel 还是让编译器自动生成？**
 A：**探索阶段手写，量产阶段自动生成**。手写用来"发现什么是最优"，
@@ -249,7 +249,7 @@ runtime / assembler / profiler / debugger 这些组件拼成一张完整的图�
 
 ---
 
-## 深层拓展：性能调优的三个"经验"
+## 扩展阅读：性能调优的三个经验
 
 ### A. "改一处，测一处"的铁律
 

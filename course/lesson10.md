@@ -290,7 +290,7 @@ https://github.com/apache/tvm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good-firs
 
 ---
 
-## 10. 深层拓展 A：怎么"读一个 PR"（参与讨论的基本功）
+## 10. 扩展阅读 A：怎么读一个 PR（参与讨论的基本功）
 
 看 PR 是学习 + 参与讨论的最好方式。一个 PR 通常包含：标题、描述、
 改动文件、测试、CI 结果、review 对话。怎么高效读？
@@ -308,7 +308,7 @@ https://github.com/apache/tvm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good-firs
 
 ---
 
-## 11. 深层拓展 B：四个"讨论黑话"快速上岗
+## 11. 扩展阅读 B：四个讨论黑话快速上岗
 
 | 黑话 | 意思 | 怎么用 |
 |---|---|---|
@@ -321,7 +321,7 @@ https://github.com/apache/tvm/issues?q=is%3Aissue+is%3Aopen+label%3A%22good-firs
 
 ---
 
-## 12. 深层拓展 C：从"读"到"写"的五个等级（自测你在哪）
+## 12. 扩展阅读 C：从读到写的五个等级
 
 | 等级 | 能力 | 证据 |
 |---|---|---|

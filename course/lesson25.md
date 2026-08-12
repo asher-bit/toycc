@@ -326,7 +326,7 @@ MLIR 是"多层可扩展 IR"——你第 14 课见过它的方言，这课把它
 
 ---
 
-## 8. 深层拓展 A：为什么 LLVM 后端这么"重"？
+## 8. 扩展阅读 A：为什么 LLVM 后端这么“重”？
 
 你可能会问：toycc 的 codegen 才 200 行，LLVM 后端为什么这么复杂？
 
@@ -339,7 +339,7 @@ MLIR 是"多层可扩展 IR"——你第 14 课见过它的方言，这课把它
 
 ---
 
-## 9. 深层拓展 B：SelectionDAG vs GlobalISel——两条指令选择路线
+## 9. 扩展阅读 B：SelectionDAG 与 GlobalISel——两条指令选择路线
 
 LLVM 有两套指令选择框架：
 - **SelectionDAG**（老，主流）：把 IR 建成有向无环图，匹配模式

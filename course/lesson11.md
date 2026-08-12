@@ -337,7 +337,7 @@ TVM 里调度相关的核心文件（`src/tir/transforms/`）：
 
 ---
 
-## 9. FAQ
+## 9. 课后答疑
 
 **Q：`cache_read` / `cache_write` 是什么？我没在 toycc 里实现。**
 A：在 TIR 里"加缓存"= 在循环里引入一个中间缓冲（寄存器/共享内存），
@@ -379,7 +379,7 @@ A：官方教程 `tutorials/language/schedule_primitives.py`（中文站有翻�
 
 ---
 
-## 深层拓展：调度的三个"进阶细节"
+## 扩展阅读：调度的三个进阶细节
 
 ### A. 为什么 reorder 和 tile 经常要一起做？
 

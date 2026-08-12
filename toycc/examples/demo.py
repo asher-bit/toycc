@@ -97,7 +97,7 @@ def main():
     print(f"  初始图: {len(g0.nodes)} 个算子")
     print(f"  最终图: {len(g3.nodes)} 个算子 (含 2 次必要布局搬移)")
     print(f"  生成的 C 源码: out.c (可在装有 gcc 的机器上编译)")
-    print(f"  生成代码与参考执行完全一致 ✔" if all(
+    print(f"  生成代码与参考执行完全一致 [OK]" if all(
         np.max(np.abs(out0[list(out0)[i]] - out_gen["output"])) < 1e-9 for i in range(len(out0)))
           else "  生成代码验证失败!")
 

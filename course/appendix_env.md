@@ -157,7 +157,7 @@ cd ../python && pip install -e .
 
 ---
 
-## 7. FAQ
+## 7. 课后答疑
 
 **Q：必须用 Linux 吗？Windows 不行吗？**
 A：能装但坑极多（编译依赖、路径、线程库）。除非你只想"跑一下 tvm"
