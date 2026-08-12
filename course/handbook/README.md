@@ -30,13 +30,13 @@ GPU 硬件：线程层次、寄存器、共享内存、缓存、Tensor Core、�
 | 3. IR 与编译器中间层 | 图、张量、循环、内存、机器指令如何表示？ | 第 1、7、11、14、25、26 课 | 类型系统、布局/形状、符号、LLVM/MLIR 核心源码 |
 | 4. 优化与调度 | 为什么能改、改了是否正确、怎样变快？ | 第 3~6、12、13、18、19 课 | 依赖分析、别名分析、向量化、并行化、代价模型 |
 | 5. GPU 硬件与微架构 | 一个线程块如何在 SM 上执行？瓶颈在哪里？ | 第 15、21、22 课 | 指令吞吐、缓存、Tensor Core、异步拷贝、TMA、互联 |
-| 6. GPU 编程模型与 Kernel | CUDA kernel、线程、warp、同步和内存访问如何写？ | 第 23 课 | CUDA C++、CUDA Runtime/Driver、PTX、内联汇编 |
-| 7. Kernel DSL 与高性能库 | CUDA、Triton、CUTLASS 分别解决什么问题？ | 目前只有零散介绍 | Triton IR/编译链、CUTLASS/CuTe、cuBLAS/cuDNN/NCCL |
+| 6. GPU 编程模型与 Kernel | CUDA kernel、线程、warp、同步和内存访问如何写？ | 第 23 课、GPU 专题 1~3 | CUDA C++、CUDA Runtime/Driver、PTX、内联汇编 |
+| 7. Kernel DSL 与高性能库 | CUDA、Triton、CUTLASS 分别解决什么问题？ | GPU 专题 4~5 | Triton IR/编译链、CUTLASS/CuTe、cuBLAS/cuDNN/NCCL |
 | 8. 编译器后端与目标工具链 | IR 怎样变成 PTX、SASS、汇编和目标文件？ | 第 24~26 课，LLVM/MLIR 专题 | nvcc/nvrtc/ptxas、寄存器分配、ABI、链接与 fatbin |
-| 9. Runtime、Driver 与系统软件 | 代码怎样加载、分配内存、发射 kernel、同步和报错？ | 第 2、7、17、24 课有基础 | CUDA Driver API、模块加载、stream/event、图执行、设备运行时 |
-| 10. 性能、正确性与调试 | 如何证明正确、测量性能、定位瓶颈？ | 第 2、16、19、23 课 | Nsight、指标体系、微基准、数值误差、性能回归 |
-| 11. 工程与生产化 | 怎样把研究代码变成可维护的工具链？ | 第 16、20、24 课 | CI、兼容性、版本矩阵、发布、回滚、二分和故障手册 |
-| 12. 多 GPU 与分布式 | 通信、切分、集合通信如何进入编译器？ | 当前缺失 | NCCL、collective、sharding、流水并行、通信计算重叠 |
+| 9. Runtime、Driver 与系统软件 | 代码怎样加载、分配内存、发射 kernel、同步和报错？ | 第 2、7、17、24、29、30 课、GPU 专题 6 | CUDA Driver API、模块加载、stream/event、图执行、设备运行时 |
+| 10. 性能、正确性与调试 | 如何证明正确、测量性能、定位瓶颈？ | 第 2、16、19、23、30 课、GPU 专题 7 | Nsight Systems/Compute、指标体系、微基准、数值误差、性能回归 |
+| 11. 工程与生产化 | 怎样把研究代码变成可维护的工具链？ | 第 16、20、24、27~30 课 | CI、兼容性、版本矩阵、发布、回滚、二分和故障手册 |
+| 12. 多 GPU 与分布式 | 通信、切分、集合通信如何进入编译器？ | GPU 专题 8~9 | NCCL、collective、sharding、流水并行、通信计算重叠 |
 
 ## 这些名词应该放在哪里
 

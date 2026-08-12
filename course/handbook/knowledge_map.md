@@ -40,18 +40,16 @@
 - 自动优化：搜索空间、代价模型、强化学习/贝叶斯搜索、跨硬件迁移和调优缓存；
 - 可观测性：编译器 remark、IR dump、kernel trace、性能数据库和自动回归分析。
 
-## 现在最值得优先补的章节
+## 现在最值得继续补的章节
 
-当前仓库已经有 TVM、LLVM、MLIR、基础 GPU 和 toycc 主线，但从“新人手册”的完整性看，优先级应是：
+GPU 工具链专题已经把第一批缺口落成章节；后续应继续把这些章节扩展为可运行实验和真实源码精读：
 
-1. CUDA 编程模型与 CUDA 工具链；
-2. PTX、SASS、寄存器分配和 GPU ABI；
-3. Triton 编程模型与 Triton/MLIR/LLVM lowering；
-4. CUTLASS/CuTe 与 GEMM 分层实现；
-5. Runtime/Driver/模块加载/stream/event/内存池；
-6. Nsight Systems/Compute 与性能指标实战；
-7. 多 GPU、NCCL、通信和 sharding；
-8. 统一的端到端案例：一个模型从前端导入到 kernel、runtime 和 profiler。
+1. 为 CUDA/PTX 章节加入真实 `.cu` 和 PTX 实验；
+2. 为 CUTLASS/Triton 章节加入可复现的 GEMM 对比；
+3. 为 Runtime/Driver 章节加入最小 module loader 和 stream/event 样例；
+4. 为 Nsight 章节加入真实报告截图、指标解释和性能回归脚本；
+5. 为 NCCL 章节加入 2 GPU/多 GPU collective 和通信重叠实验；
+6. 把端到端案例接到 TVM/MLIR 的真实 lowering pipeline。
 
 ## 每个新专题必须采用的章节模板
 

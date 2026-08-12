@@ -48,9 +48,14 @@
 **五、GPU 编程、Kernel 与库生态**
 
 - [第 23 课 · Kernel 与性能分析](lesson23.md)
-- [CUDA 专题（待补）](handbook/knowledge_map.md#p1进入-gpu-工具链后必须补齐)
-- [CUTLASS / CuTe 专题（待补）](handbook/knowledge_map.md#p1进入-gpu-工具链后必须补齐)
-- [Triton 专题（待补）](handbook/knowledge_map.md#p1进入-gpu-工具链后必须补齐)
+- [GPU 工具链专题目录](gpu/README.md)
+- [第 1 章 · CUDA 编程模型](gpu/01_cuda_programming_model.md)
+- [第 2 章 · CUDA 工具链与 PTX](gpu/02_cuda_toolchain_ptx.md)
+- [第 3 章 · GPU ISA、寄存器与 ABI](gpu/03_gpu_isa_registers_abi.md)
+- [第 4 章 · CUTLASS / CuTe](gpu/04_cutlass_cute.md)
+- [第 5 章 · Triton 编译器](gpu/05_triton_compiler.md)
+- [第 7 章 · 性能分析与 Nsight](gpu/07_profiling_performance.md)
+- [第 8 章 · NCCL 与多 GPU](gpu/08_multi_gpu_nccl.md)
 
 **六、后端与工具链**
 
@@ -60,10 +65,10 @@
 - [LLVM 深入专题](llvm/README.md)
 - [MLIR 深入专题](mlir/README.md)
 
-**七、Runtime、Driver 与系统软件（待补）**
+**七、Runtime、Driver 与系统软件**
 
-- [Runtime、Driver、模块加载与执行模型](handbook/knowledge_map.md#p1进入-gpu-工具链后必须补齐)
-- [多 GPU、NCCL 与通信编译](handbook/knowledge_map.md#p3高级方向)
+- [第 6 章 · Runtime / Driver](gpu/06_runtime_driver.md)
+- [第 9 章 · 端到端案例](gpu/09_end_to_end.md)
 
 **八、知识地图与入职验收**
 

@@ -19,6 +19,7 @@
 │   ├── runner.py        ← 每课的实验运行器
 │   ├── lesson00~30.md   ← 三十一课
 │   ├── handbook/         ← 新员工总手册、岗位路径、知识地图
+│   ├── gpu/              ← CUDA/PTX/CUTLASS/Triton/Runtime/Profiler/NCCL 专题
 │   ├── tvm/              ← 真实 TVM 源码精读专题
 │   ├── llvm/             ← LLVM 源码与实践分章
 │   ├── mlir/             ← MLIR 源码与实践分章
@@ -144,6 +145,10 @@
 | 28 | **内存模型与并发** | 原子/fence/弱内存序、同步四层级、bar 死锁 | `runner 28` |
 | 29 | **二进制与加载** | ELF/cubin/fatbin、重定位手算、运行时 JIT、稳定中间层 | `runner 29` |
 | 30 | **驱动与命令提交** | 命令缓冲/门铃、context/stream/event、GPU MMU、launch 开销手算 | `runner 30` |
+
+### GPU 工具链专题
+
+第 21~24、27~30 课建立 GPU 芯片和工具链全景；[GPU 工具链专题](gpu/README.md)继续补充 CUDA、PTX、寄存器/ABI、CUTLASS、Triton、Runtime/Driver、Nsight、NCCL 和端到端排查。
 
 ### 附录（随时查）
 
