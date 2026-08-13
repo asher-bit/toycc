@@ -104,7 +104,7 @@ tile kernel 处理两类数据：数组与 tile。**数组**（或全局数组�
 
 #### 1.2.2.3.2 tile 空间与数据搬运
 
-数据通过 load 和 store 操作在数组与 tile 之间流动。这些操作使用一个称为 **tile 空间**的概念，即把数组概念性地划分为等大、不重叠的 tile。例如考虑形状为 (M, N) 的二维数组。若 load 操作指定 tile 形状 (tm, tn)，数组在概念上被划分为若干 tile 行与若干 tile 列。在此 tile 空间中的索引，如 (i, j)，标识要加载哪个 tile。load 返回一个形状为 (tm, tn) 的 tile，含数组中对应元素。当 tile 超出数组边界时——例如在数组维度不是 tile 维度整数倍的边缘——load 会指明如何处理越界元素，例如用零填充（图 9）。
+数据通过 load 和 store 操作在数组与 tile 之间流动。这些操作使用一个称为 **tile 空间**的概念，即把数组概念性地划分为等大、不重叠的 tile。例如考虑形状为 (M, N) 的二维数组。若 load 操作指定 tile 形状 (tm, tn)，数组在概念上被划分为 ⌈M/tm⌉ 行与 ⌈N/tn⌉ 列的 tile。在此 tile 空间中的索引，如 (i, j)，标识要加载哪个 tile。load 返回一个形状为 (tm, tn) 的 tile，含数组中对应元素。当 tile 超出数组边界时——例如在数组维度不是 tile 维度整数倍的边缘——load 会指明如何处理越界元素，例如用零填充（图 9）。
 
 ![图 9 tile 空间与数据搬运](images/figure9-tile-space-data-movement.png)
 
