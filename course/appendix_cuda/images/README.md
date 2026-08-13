@@ -25,5 +25,6 @@
 | `figure17-bank-structure-32x32.png` | 2.3.4.2.2 节"图 17 32×32 共享内存数组中的 bank 结构" |
 | `figure18-bank-structure-32x33.png` | 2.3.4.2.2 节"图 18 32×33 共享内存数组中的 bank 结构" |
 | `figure19-tile-space-indexing.png` | 2.4.6.1 节"图 19 partition view 的 tile 空间索引" |
+| `figure20-async-concurrent-execution.png` | 2.5.1 节"图 20 用 CUDA stream 做异步并发执行" |
 
 放入文件后图片即自动渲染。如不补图，原文引用会显示为占位 alt 文本，不影响译文的可读性。
