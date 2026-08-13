@@ -63,6 +63,7 @@ CUDA 是 NVIDIA 开发的并行计算平台和编程模型，通过利用 GPU �
 | [01_intro.md](01_intro.md) | 1.1 Introduction | GPU 的由来、相对 CPU 的设计取舍、库/框架/DSL 三种利用 GPU 的方式 |
 | [02_programming_model.md](02_programming_model.md) | 1.2 Programming Model | 异构系统、SM/grid/block/warp、SIMT、Tile 编程、GPU 内存层次 |
 | [03_platform.md](03_platform.md) | 1.3 The CUDA Platform | 计算能力、Toolkit/驱动、PTX、cubin/fatbin、二进制与 PTX 兼容性、JIT |
+| [04_intro_cuda_cpp.md](04_intro_cuda_cpp.md) | 2.1 Intro to CUDA C++ | NVCC 编译、kernel 发射、内存管理、同步、错误检查、集群 |
 
 图片占位清单见 [images/README.md](images/README.md)。
 

@@ -104,6 +104,7 @@
 - [1.1 引言](appendix_cuda/01_intro.md)
 - [1.2 编程模型](appendix_cuda/02_programming_model.md)
 - [1.3 CUDA 平台](appendix_cuda/03_platform.md)
+- [2.1 CUDA C++ 入门](appendix_cuda/04_intro_cuda_cpp.md)
 
 **参考资料**
 
