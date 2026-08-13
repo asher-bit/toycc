@@ -69,6 +69,7 @@ CUDA 是 NVIDIA 开发的并行计算平台和编程模型，通过利用 GPU �
 | [07_writing_tile_kernels.md](07_writing_tile_kernels.md) | 2.4 Writing Tile Kernels | Tile kernel 声明/发射、编译期常量、tile 空间 load/store、gather/scatter、矩阵乘、归约、原子、优化提示 |
 | [08_asynchronous_execution.md](08_asynchronous_execution.md) | 2.5 Asynchronous Execution | stream/event、并发执行、同步、回调、错误处理、stream 优先级、CUDA Graphs 入门 |
 | [09_unified_system_memory.md](09_unified_system_memory.md) | 2.6 Unified and System Memory | 统一虚拟地址空间、托管内存/范式判定、HMM/ATS、页锁定主机内存、映射内存 |
+| [10_nvcc.md](10_nvcc.md) | 2.7 NVCC: The NVIDIA CUDA Compiler | 源文件与头文件、编译流程、基本用法、PTX/cubin 生成、分离编译、LTO、编译器性能控制 |
 
 图片占位清单见 [images/README.md](images/README.md)。
 

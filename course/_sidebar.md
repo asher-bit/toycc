@@ -110,6 +110,7 @@
 - [2.4 编写 Tile Kernel](appendix_cuda/07_writing_tile_kernels.md)
 - [2.5 异步执行](appendix_cuda/08_asynchronous_execution.md)
 - [2.6 统一内存与系统内存](appendix_cuda/09_unified_system_memory.md)
+- [2.7 NVCC 编译器](appendix_cuda/10_nvcc.md)
 
 **参考资料**
 

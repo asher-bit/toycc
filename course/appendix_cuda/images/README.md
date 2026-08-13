@@ -27,5 +27,7 @@
 | `figure19-tile-space-indexing.png` | 2.4.6.1 节"图 19 partition view 的 tile 空间索引" |
 | `figure20-async-concurrent-execution.png` | 2.5.1 节"图 20 用 CUDA stream 做异步并发执行" |
 | `figure21-unified-memory-paradigms.png` | 2.6.2.1 节"图 21 统一内存范式判定" |
+| `figure22-nvcc-high-level-flow.png` | 2.7.2 节"nvcc 基本编译流程" |
+| `figure23-nvcc-high-level-flow-multiple-arch.png` | 2.7.2 节"带多个 PTX 和 cubin 架构的 nvcc 编译流程" |
 
 放入文件后图片即自动渲染。如不补图，原文引用会显示为占位 alt 文本，不影响译文的可读性。
