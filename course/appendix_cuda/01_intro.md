@@ -18,7 +18,7 @@ GPU 专门面向高度并行的计算，把更多晶体管投入到数据处理�
 
 ![图 1 GPU 把更多晶体管用于数据处理](images/figure1-cpu-vs-gpu-transistors.png)
 
-> 图 1 GPU 把更多晶体管用于数据处理。原图取自 NVIDIA 官方指南，相对路径 `images/figure1-cpu-vs-gpu-transistors.png`——请把图片放到本附录的 `images/` 下使用此文件名，或把此引用替换为官方页面直链。
+> 图 1 GPU 把更多晶体管用于数据处理。原图取自 NVIDIA 官方指南。
 
 ## 1.1.3 快速上手
 
