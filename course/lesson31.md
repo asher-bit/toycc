@@ -43,10 +43,10 @@ decode:   每次只生成 1 个 token, 循环 N 次        → 小 GEMV, 带宽�
 > ```
 >
 > 比值：带宽时间 7ms vs 算力时间 0.045ms——**155 倍的带宽瓶颈**。
-> 这就是第 19 课 roofline 的直接应用：decode 的算术强度 ≈ 1 FLOP/2B，
+> 这就是 roofline 的直接应用：decode 的算术强度 ≈ 1 FLOP/2B，
 > 远低于 A100 的拐点（~156 FLOP/B）。**decode 的全部优化，
-> 都是围绕"怎么少读、快读"展开的**——量化（33 课）、KV 压缩、
-> speculative decoding（35 课）都是这条逻辑的分支。
+> 都是围绕"怎么少读、快读"展开的**——量化、KV 压缩、
+> speculative decoding 都是这条逻辑的分支。
 
 > **手算 2：prefill 为什么相反**
 >
@@ -88,7 +88,7 @@ batch=32: 2.1 × 32 ≈ 67 GB   ← 比权重(14GB)大近 5 倍!
 
 **结论**：大模型推理的显存瓶颈往往**不是权重，是 KV cache**。
 所以"这张卡能跑多大 batch/多长上下文"是背下来的公式。
-这也是 35 课"PagedAttention/KV 量化/投机解码"存在的理由。
+这也是 PagedAttention/KV 量化/投机解码存在的理由。
 
 ### 3.3 PagedAttention：KV cache 的"虚拟内存"
 
@@ -102,7 +102,7 @@ PagedAttention 把 KV cache 切成**固定大小的页（如 16 token/页）**�
         页表映射:      页3         页7               (物理页, 可不连续)
 ```
 
-**这就是第 30 课 GPU MMU 页表思想原样搬到应用层**——按需分配、
+**这就是 GPU MMU 页表思想原样搬到应用层**——按需分配、
 碎片消失、可共享（beam search/并行采样共用前缀页，copy-on-write）。
 显存利用率从 ~40% 提到 ~90%+，吞吐直接翻倍。
 
@@ -138,10 +138,10 @@ N×N 矩阵是**纯中间结果**——算完 softmax 就没用了，却要付�
 N×N 矩阵从未落显存 → IO 从 O(N²) 降到 O(N²d/M)(M=SRAM 大小)
 ```
 
-**这正是第 11 课 tile + 第 19 课 roofline 在真实算子上的教科书
+**这正是 tile + roofline 在真实算子上的教科书
 应用**：把"带宽受限"的算子通过分块复用变成接近算力受限。
-FlashAttention-2/3 再加 warp 级分工（28 课的 warp 原语）和
-异步拷贝（TMA，21 课新架构）——**你学过的每一块拼图都在里面**。
+FlashAttention-2/3 再加 warp 级分工（warp 原语）和
+异步拷贝（TMA）——**你学过的每一块拼图都在里面**。
 
 ---
 
@@ -151,12 +151,12 @@ FlashAttention-2/3 再加 warp 级分工（28 课的 warp 原语）和
 
 1. **GEMV vs GEMM 切换**：decode 时 batch=1 是 GEMV（带宽受限），
    continuous batching 把多请求拼成 GEMM——**算子形态由 batch 决定**，
-   编译器要按形状分发不同 kernel（第 17 课动态形状的落地）
+   编译器要按形状分发不同 kernel
 2. **continuous batching 是调度问题**：请求来了就插进当前 batch——
-   第 13 课"搜索/调度"思想的服务化版本（目标是 GPU 不空转）
-3. **量化 kernel**：W4A16 的 dequant 融合进 GEMM（第 33 课）
+   "搜索/调度"思想的服务化版本（目标是 GPU 不空转）
+3. **量化 kernel**：W4A16 的 dequant 融合进 GEMM
 4. **图优化**：把 RMSNorm/SwiGLU/RoPE 融进 GEMM 的 epilogue——
-   第 3 课融合在 LLM 上的直接应用
+    算子融合在 LLM 上的直接应用
 
 ---
 
@@ -189,7 +189,7 @@ A：公式结构要背（三行），数字不用——会查表（HBM 带宽、
 - 推理性能 = **算力账 + 带宽账 + 显存账**，三张账分开算
 - prefill 算力受限（GEMM），decode 带宽受限（GEMV，上限 = 权重字节/带宽）
 - KV cache 字节 = 2×层数×d×序列×batch×精度——**大模型显存第一约束**
-- PagedAttention = KV cache 的虚拟内存（页表思想，呼应第 30 课）
+- PagedAttention = KV cache 的虚拟内存（页表思想）
 - FlashAttention = tile + 在线 softmax，把 N² 中间结果消灭在 SRAM 里
 - TTFT/TPOT 分开报，continuous batching 是调度问题
 
@@ -219,12 +219,17 @@ d=128 代入：tile 选多大让 SRAM 装下 K/V 块 + 输出块 + 统计量—�
 
 ```
 需求: 70B 模型, 4K 上下文, 100 并发
-权重: W4A16 → 35GB(第33课)
-KV:   2×80×8192×4096×100×1B(KV int8) ≈ 67GB
-合计 ≈ 102GB → 2×H100(80GB) TP=2 起步, 或 4×L40S
+权重: W4A16 → 35GB
+KV:   GQA 头维度 1024 (Llama-2-70B 实际配置):
+      2 × 80 × 1024 × 4096 × 100 × 1B(KV int8) ≈ 67GB
+      无 GQA(d_kv = 8192) 时同式 ×8 = 537GB
+合计 ≈ 102GB → 2×H100(80GB) TP=2 起步
 ```
-会议室里"要几张卡"的答案就是这么推出来的——权重账 + KV 账
-+ 并行方式（第 32 课），三行字。
+
+注意 d 用的是 KV 头的维度，不是隐层维度：GQA（分组查询注意力）
+把 KV 头砍到 8 个（1024 维），KV cache 直接省 8 倍——这也是
+"长上下文模型都用 GQA"的原因。无 GQA 的 70B 要 537GB KV，
+一张卡连 KV 都装不下。
 ---
 
 **导航**：⬅ [上一节](lesson30.md)（第 30 课 · 驱动与命令提交）　｜　[下一节](lesson32.md)（第 32 课 · 分布式并行与通信）➡

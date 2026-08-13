@@ -17,7 +17,7 @@
 
 ## 1. 为什么要"读源码"？——你现在的能力已经够了
 
-经过前 7 课，你脑子里已经有了一张完整的地图：
+你脑子里已经有了一张完整的地图：
 
 ```
 IR(计算图) → Pass(融合/布局/折叠/内存) → 代码生成
@@ -117,7 +117,7 @@ IR(计算图) → Pass(融合/布局/折叠/内存) → 代码生成
   4. 满足就把整段标成一组（`CommitFuse`）
   5. 用并查集（Union-Find）管理分组
 
-**为什么这个设计高明？** 第 3 课我们用 `len(consumers) != 1` 直接放弃菱形，
+**为什么这个设计高明？** 我们 toycc 用 `len(consumers) != 1` 直接放弃菱形，
 保守但错过优化。TVM 用后支配树把"整段路径是否安全"判断出来，
 既能安全又能抓住优化机会。**这就是 toycc 和真框架的分水岭之一。**
 
@@ -159,8 +159,8 @@ IRModule FuseOps(IRModule mod, int opt_level, size_t max_fuse_depth) {
 | Step 2 分组 `GraphPartitioner::Partition` | `FusionPass._absorb_followers`（贪心） |
 | Step 3 改写 `OperatorFusor::Transform` | `FusionPass._absorb`（rewire + 删节点） |
 
-注意 `max_fuse_depth` 参数——**融合深度上限**。这就是第 3 课 FAQ 里说的
-"防止单核过大"。TVM 有，toycc 没做。
+注意 `max_fuse_depth` 参数——**融合深度上限**，也就是"防止单核过大"。
+TVM 有，toycc 没做。
 
 **Pass 工厂**（看它是怎么注册进 pass 体系的）：
 
@@ -202,7 +202,7 @@ def run_passes(graph, passes):
 - `PatternBasedPartitioner`：用 TVM 的 DPL（数据流 pattern 语言）描述
   "conv2d+relu" 这样的模板，自动生成融合规则。这是"手写规则"的工业升级。
 - `CompositeFunctionAnnotator`：给融合函数打 `kComposite` 标注，
-  这样第 7 课讲的外部后端（`relax.ext.*`）能认出"这是谁融合的"。
+  这样外部后端（`relax.ext.*`）能认出"这是谁融合的"。
 
 ---
 
@@ -225,7 +225,7 @@ FoldConstant()          Pass 工厂
 
 ### 第二遍：入口 + 关键决策
 
-**`ShouldBeFolded`（第 5 课讲过，再看一遍"为什么"）**：
+**`ShouldBeFolded`**：
 
 ```cpp
 bool ShouldBeFolded(Expr expr) {
@@ -277,7 +277,7 @@ Expr VisitExpr_(const CallNode* call) final {
 TVM 里叫 **legalization（合法化/下降）**，这是 toycc 没做的一层：
 我们把图直接执行了，TVM 得先把"逻辑算子"翻译成"可编译的函数"再折。
 
-**`ConstEvaluateCallTIR` 的求值**（第 5 课提过）：
+**`ConstEvaluateCallTIR` 的求值**：
 
 ```cpp
 // 1. GetCachedBuild(prim_func) → 用 LLVM 编译成可执行函数
@@ -356,7 +356,7 @@ A：`IRModule` 是"一组函数"的集合（一个模型可以拆成多个子函
 
 **Q：TVM 的 pass 在 Python 里怎么调用？**
 A：`relax.transform.FuseOps()` 返回一个 Pass 对象，放进
-`tvm.ir.transform.Sequential([...])` 里串起来。第 9 课会完整跑一遍。
+`tvm.ir.transform.Sequential([...])` 里串起来。
 
 ---
 

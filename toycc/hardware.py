@@ -152,9 +152,10 @@ def compare_schedules(M=16, N=16, K=16, block=4) -> str:
     """对比不同循环顺序的缓存表现, 打印成表格。"""
     rows = []
     for order in ("ijk", "ikj", "kij", "tiled"):
-        acc, miss, hit = matmul_misses(M, N, K, order, block)
-        cyc = estimate_cycles(acc, miss)
-        rows.append((order, acc, miss, hit, cyc))
+        hit_cnt, miss_cnt, hit_rate = matmul_misses(M, N, K, order, block)
+        acc = hit_cnt + miss_cnt
+        cyc = estimate_cycles(acc, miss_cnt)
+        rows.append((order, acc, miss_cnt, hit_rate, cyc))
     lines = []
     lines.append(f"{'顺序':<6}{'访问数':>8}{'缺失数':>8}{'命中率':>8}{'延迟(周期)':>12}")
     for order, acc, miss, hit, cyc in rows:
@@ -170,6 +171,6 @@ def register_pressure_demo():
     lines.append("寄存器压力: 一个核里同时活着的中间值个数")
     lines.append("  朴素 conv(6 层循环): 每步读1个输入、算1次, 活值约 3~4 个")
     lines.append("  融合 conv+bias+relu: 活值约 5~6 个(acc + 3 输入 + bias)")
-    lines.append("  超大融合核(50 算子): 活值可达几十个 → 超过 64 个寄存器就溢出!")
-    lines.append("溢出后果: 中间值被迫写回内存, 反而变慢 → 这就是融合要有限度")
+    lines.append("  融合 50 个算子: 每个算子各带操作数, 活值几十个 → x86 只有 16 个通用寄存器")
+    lines.append("  装不下 → 溢出(spill): 值被迫写回内存, 每次用再读回来, 反而变慢")
     return "\n".join(lines)

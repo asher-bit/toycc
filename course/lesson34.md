@@ -46,10 +46,10 @@ def add(a_ptr, b_ptr, c_ptr, n, BLOCK: tl.constexpr):
 ### 2.2 逐行讲：Triton 替你做了三件事
 
 - **`tl.arange` + `tl.load` 向量操作**：你写"这一块"，编译器展开成
-  warp 内 32 线程的分工——**合并访问自动保证**（21 课的知识它代劳了）
-- **`mask`**：边界处理不用手写 if——编译器生成 predication（22 课）
+  warp 内 32 线程的分工——**合并访问自动保证**（这块知识编译器代劳了）
+- **`mask`**：边界处理不用手写 if——编译器生成 predication
 - **`BLOCK: tl.constexpr`**：块大小是编译期参数——**autotune 直接搜它**
-  （13 课的搜索空间，Triton 内置 `@triton.autotune`）
+  （这正是 autotune 的搜索空间，Triton 内置 `@triton.autotune`）
 
 **一句话**：CUDA 让你指挥每个线程；Triton 让你指挥每个块，
 线程级的脏活（合并访问/发散/掩码/流水）编译器全包。
@@ -65,7 +65,7 @@ Triton Python DSL
   → LLVM IR → PTX (第14/22课) → SASS (ptxas)
 ```
 
-**Triton 是 MLIR 生态最成功的商用案例**——你在第 26 课学的
+**Triton 是 MLIR 生态最成功的商用案例**——MLIR 的
 方言/pattern rewrite/渐进式下降，在 Triton 源码里全部都有。
 
 ---
@@ -88,9 +88,9 @@ Grid (整个 GEMM)
             └─ instruction tile (16×8×16) ← warp 内一条 mma.sync 算一块
 ```
 
-每一层对应第 21 课的一级硬件：CTA→SM 共享内存、warp→寄存器、
+每一层对应一级硬件：CTA→SM 共享内存、warp→寄存器、
 instruction→张量核。**tile 尺寸是模板参数**：换芯片 = 换一组数字，
-代码结构不变。这就是"第 24 课五步"里步骤 4 的工业版答案——
+代码结构不变。这就是"加新后端五步"里 autotune 那步的工业版答案——
 autotune 搜参数，CUTLASS 直接把参数做成模板。
 
 ### 3.3 读一份真实的模板实例化
@@ -106,7 +106,7 @@ using Gemm = cutlass::gemm::device::Gemm<
 >;
 ```
 
-读法：每个模板参数回答一个第 19/21 课的问题（tile 多大、
+读法：每个模板参数回答一个性能问题（tile 多大、
 哪级缓存、什么指令、epilogue 融什么）。**性能工程师读 CUTLASS
 参数表，就像你读调度参数**——同一套语言。
 
@@ -121,7 +121,7 @@ using Gemm = cutlass::gemm::device::Gemm<
 | **编译器自动生成**（TVM/meta_schedule） | 长尾算子、自研芯片（没人手写） | 极致性能追不上手写库 |
 
 **决策口诀**：新算子先 Triton 跑通 → 成为瓶颈就换 CUTLASS/手写 →
-自研芯片没人生态就靠编译器+autotune 兜底（第 24 课五步）。
+自研芯片没人生态就靠编译器+autotune 兜底（加新后端五步）。
 
 ---
 
@@ -132,10 +132,10 @@ using Gemm = cutlass::gemm::device::Gemm<
    PyTorch 生态的 kernel 就能低成本移植过来。**生态兼容比
    指令性能更能决定芯片生死**
 2. **CUTLASS 的层次 tile 直接可搬**：你的芯片的 SM/warp/张量核
-   层级对应一套 tile 参数——第 24 课 target 描述里的数字，
+   层级对应一套 tile 参数——target 描述里的数字，
    就是填进这种模板的东西
 3. **Triton 的 autotune 思路**：`@triton.autotune` 对 BLOCK/num_warps
-   网格搜索 + benchmark 选优——这就是第 13 课的 mini 版，
+   网格搜索 + benchmark 选优——这就是 autotune 的 mini 版，
    你的工具链可以直接照抄接口设计
 
 ---
@@ -151,7 +151,7 @@ A：它封装了 warp 内细节，所以**warp specialization、TMA 的
 A：都是"AI 编译器"，哲学不同：TVM 是"搜索+生成"（ autotune
 驱动），Triton 是"手写块级 + 编译器补线程级"。2026 年格局：
 PyTorch 生态 Triton 占主导；TVM 在自研芯片/长尾算子上有优势
-（后端可插拔，第 24 课）。两者都在用 MLIR。
+（后端可插拔）。两者都在用 MLIR。
 
 **Q：CUTLASS 只能用于 NVIDIA 吗？**
 A：CUTLASS 本体绑定 NV 张量核指令。但它的**层次 tile 架构思想**
@@ -162,7 +162,7 @@ A：CUTLASS 本体绑定 NV 张量核指令。但它的**层次 tile 架构思�
 A：Triton 要**会写**（vector_add → fused_softmax → 简单 GEMM
 三级），CUTLASS 要**会读**（看得懂模板参数表 + 会改 epilogue）。
 高性能部面试常考："写一个 fused kernel 你怎么选 BLOCK"——
-答案就是 19 课的 roofline + 13 课的 autotune。
+答案就是 roofline + autotune。
 
 ---
 
@@ -170,7 +170,7 @@ A：Triton 要**会写**（vector_add → fused_softmax → 简单 GEMM
 
 - Triton = 块级抽象 + Python 前端 + 内置 autotune；
   合并访问/掩码/流水编译器全包
-- Triton 下降链 = MLIR 方言 → TTGIR → LLVM → PTX（第 26 课的商用范本）
+- Triton 下降链 = MLIR 方言 → TTGIR → LLVM → PTX（MLIR 的商用范本）
 - CUTLASS = 人类最优经验编码成 C++ 模板层次（CTA/warp/instruction 三级 tile）
 - 分工：Triton 快迭代、CUTLASS 追极致、编译器+autotune 兜底长尾/自研
 - 自研芯片：支持类 Triton 前端 = 生态入场券；CUTLASS 思想可原样搬

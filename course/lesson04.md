@@ -208,8 +208,8 @@ def _ensure_layout(g, layout, node, input_idx, want):
 `reshape` 按**内存顺序**拍平。同样的数据：
 
 ```
-NCHW 拍平:  n c h w  →  通道 c 最快变化
-NHWC 拍平:  n h w c  →  像素 w 最快变化
+NCHW 拍平:  n c h w  →  最内层是 w, 像素 w 最快变化
+NHWC 拍平:  n h w c  →  最内层是 c, 通道 c 最快变化
 ```
 
 两种拍平得到的**一维顺序不一样**，那 `reshape((N, C*H*W))` 的结果就不同。
@@ -255,7 +255,7 @@ def layout_transform(inputs, attrs):
 - 一共 **6 个**
 
 但注意：其中 4 个是**转常量**（权重、偏置）。常量转换在编译期做一次，
-运行时根本不付钱（第 5 课常量折叠会把它删掉）。真正运行时只有 2 次数据搬移：
+运行时根本不付钱（常量折叠会把它删掉）。真正运行时只有 2 次数据搬移：
 
 ```
 x(NCHW) →[conv1_lt_0]→ conv1 → conv2 →[flat_lt_0]→ reshape → matmul
@@ -316,7 +316,7 @@ Expr RewriteExpr(const Expr& expr, const NLayout& to) {
 python -m course.runner 4
 ```
 
-对照第 5 节数一数插的搬移，再对照输出里 `layout_transform` 节点。
+数一数插的搬移，再对照输出里 `layout_transform` 节点。
 
 ---
 
@@ -325,7 +325,7 @@ python -m course.runner 4
 **Q：为什么权重和 bias 也要转布局？**
 A：conv 的 NHWC 卷积要求"通道在最后"。权重 `(OC,C,KH,KW)` 也得按 NHWC
 重排成 `(OC,KH,KW,C)`，bias 从 `(1,OC,1,1)` 重排成 `(1,1,1,OC)`，
-否则广播对不上、点积对不上。第 5 课你会看到：这些常量转换被折叠掉，
+否则广播对不上、点积对不上。这些常量转换会被折叠掉，
 运行时 0 成本。
 
 **Q：布局转换本身要搬数据，什么时候"转"是赚的？**
@@ -350,7 +350,7 @@ A：不会。因为 layout 表是单向推进的（拓扑序），每次 `_ensur
 - 好坏必须绑定算子看：CPU 常选 NHWC，GPU(cuDNN) 常选 NCHW
 - 逐元素算子"不挑布局" → 布局可**沿图传播**
 - 优化 = 只在边界插 `layout_transform`，运行时只付 2 次数据搬移
-- 权重/bias 的转换交给常量折叠（下一课）在编译期解决
+- 权重/bias 的转换交给常量折叠在编译期解决
 
 **下一步**：第 5 课——常量折叠。刚才那些"给权重转布局"的操作，
 凭什么能在编译期做完、运行时一分钱不花？
@@ -368,8 +368,8 @@ A：不会。因为 layout 表是单向推进的（拓扑序），每次 `_ensur
 **布局 = 每个维度的 stride**。NCHW vs NHWC 就是 strides 的排列：
 
 ```
-NCHW (1,3,8,8): strides = (192, 64, 8, 1)     # 通道最连续
-NHWC (1,8,8,3): strides = (192, 24, 3, 1)     # 像素最连续
+NCHW (1,3,8,8): strides = (192, 64, 8, 1)     # 最内层 w: 像素最连续
+NHWC (1,8,8,3): strides = (192, 24, 3, 1)     # 最内层 c: 通道最连续
 ```
 
 **这个视角带来三个理解**：

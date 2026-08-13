@@ -19,7 +19,7 @@
        (等 review → 根据意见修改 → 合并)
 ```
 
-**核心循环**（你从第 3 课就知道的）：
+**核心循环**：
 
 ```
 改代码 → 跑测试 → 看失败原因 → 再改 → 通过 → 提交
@@ -109,8 +109,8 @@ python3 -c "from tvm import relax; print(relax.__name__)"   # 确认 relax 在
 >
 > 这也解释了为什么 TVM 有 100+ 个 `USE_*` 配置开关（LLVM / CUDA / OpenCL...）：
 > **同一个源码，不同环境编出不同的库**。`USE_LLVM=ON` 就是把 LLVM 那个
-> 巨大依赖编进去——编译器的工作方式就是"把要做后端（第 25 课 LLVM）时
-> 才需要的东西，在编译期决定好"。这和你在第 5 课学的"编译期 vs 运行时"
+> 巨大依赖编进去——编译器的工作方式就是"把要做后端（LLVM）时
+> 才需要的东西，在编译期决定好"。这和"编译期 vs 运行时"
 > 是同一件事，只不过发生在**构建系统**里。
 
 ---
@@ -189,7 +189,7 @@ with transform.PassContext(config={
     optimized = pipeline(mod)
 ```
 
-**这就是第 9 课深拓展 B 说的"print_all"**。看到 pass 前后 IR 的差异，
+**这就是 `print_all` 调试法**。看到 pass 前后 IR 的差异，
 你就知道 pass 生效没、改对没。
 
 ### 4.2 第二招：小步隔离
@@ -239,12 +239,12 @@ gdb --args python3 my_script.py
 > 3. **看 #4（最底层）**：从 Python 进来——确认不是 C++ 端独立崩溃。
 >
 > 结论就一句话：**融合 pass 里对某个算子的"类型假设"错了**。修复方向：
-> 在 `GetOpPattern` 里对未知算子类型加判断（对照第 1 课 `__post_init__`
+> 在 `GetOpPattern` 里对未知算子类型加判断（对照 toycc 里 `__post_init__`
 > 的"尽早报错"哲学——C++ 侧同样要"谁知道就校验谁"）。
 
 ### 4.4 数值不对 → 用参考执行器
 
-第 2 课的思想：写个 numpy 参考实现对比。TVM 里：
+参考执行器的思想：写个 numpy 参考实现对比。TVM 里：
 
 ```python
 tvm.testing.assert_allclose(compiled_out, reference_out, rtol=1e-4, atol=1e-5)
@@ -411,7 +411,7 @@ A：在开源编译器里**没有测试 = 不会合并**。测试是"你改动�
 也是维护者的第一检查项。把"写测试"当"给自己上保险"，不是负担。
 
 **Q：我的 toycc 练习和真实 TVM 差距太大，怎么过渡？**
-A：先在 toycc 上把"改代码→跑验证"的循环做熟（第 10 课任务 A），
+A：先在 toycc 上把"改代码→跑验证"的循环做熟（如 maxpool/DCE 任务），
 再到真实 TVM 做同一件事（MyFirstPass）。逻辑一样，只是工具变了。
 **过渡的关键不是知识，是手感。**
 

@@ -23,7 +23,7 @@
 
 ## 2. 一个具体的浪费场景（衔接上一课）
 
-上一课布局 pass 给 conv 的权重插了 4 个 `layout_transform`：
+布局 pass 给 conv 的权重插了 4 个 `layout_transform`：
 
 ```
 conv1_lt_1 = layout_transform(conv1_w, nchw→nhwc)   ← 转权重
@@ -79,7 +79,7 @@ class ConstantFoldPass:
 | `g.set_constant(node.name, ...)` | 结果变成新常量 |
 | `g.remove_node(node.name)` | 节点从图里消失 |
 
-**注意那个 `fn = getattr(RefImpl, ...)`**——它就是第 2 课的参考执行器！
+**注意那个 `fn = getattr(RefImpl, ...)`**——它就是参考执行器！
 常量折叠 = **把参考执行器搬到编译期跑一遍，把结果焊进常量表**。
 "一个执行器，两种用途"，这是本课要你记住的第一个点。
 
@@ -201,7 +201,7 @@ TIR PrimFunc（C++ 侧的东西），没有 numpy 可用。它选择"真的用 L
 python -m course.runner 5
 ```
 
-对比第 4 课的输出：布局 pass 插了 6 个 transform，折叠后图里还剩 6 个节点，
+布局 pass 插了 6 个 transform，折叠后图里还剩 6 个节点，
 其中那 4 个权重/偏置的 transform 变成了 input 列表里的常量。
 
 ---
@@ -218,7 +218,7 @@ A：会，这就是 `ShouldBeFolded` 存在的理由。真实编译器在"物化
 
 **Q：折叠后权重从哪来？运行时拿到的权重是什么？**
 A：折叠只处理"编译期已知的常量"。真正的推理权重（部署时的模型参数）
-是运行时绑定的（第 9 课 `relax.vm` 会看到 `bind_params`）。toycc 为了教学
+是运行时绑定的（`relax.vm` 里的 `bind_params`）。toycc 为了教学
 把权重当编译期常量处理了。
 
 **Q：`g.inputs.append(node.name)` 这行什么意思？**
@@ -237,7 +237,7 @@ A：节点 `conv1_lt_1` 被删了，但它的名字还在被别的算子引用�
 - 生产级折叠有"值不值得"的权衡（`ShouldBeFolded`）+ "纯函数"检查
 - 与 DCE 配合使用效果更干净
 
-**下一步**：第 6 课——内存规划。终于轮到"把内存省 70%"这回事了。
+**下一步**：第 6 课——内存规划。终于轮到"把内存省 47%"这回事了。
 这次我们用的工具是**生命周期分析**。
 
 ---

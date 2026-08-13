@@ -8,7 +8,7 @@
 
 ---
 
-## 1. 先把剩下 4 个源码文件扫一遍（用第 8 课的"三遍法"）
+## 1. 先把剩下 4 个源码文件扫一遍（用"三遍法"）
 
 ### 1.1 `convert_layout.cc`（373 行）——布局
 
@@ -26,7 +26,7 @@ LayoutConvertMutator    改写主体 (ExprMutator)
 ConvertLayoutPass / ConvertLayout()
 ```
 
-**入口精读**——头注释（第 4 课看过，再看一遍找细节）：
+**入口精读**——头注释：
 
 ```cpp
 /*
@@ -155,7 +155,7 @@ workspace_var_main_ = builder_->Emit(workspace, "workspace_main");
 
 ### 1.4 `run_codegen.cc`（244 行）——代码生成入口
 
-第 7 课已精读 `InvokeCodegen`。补一个细节——**用 ExternFunc 替换**：
+`InvokeCodegen` 会把带 `kCodegen` 属性的函数分桶。补一个细节——**用 ExternFunc 替换**：
 
 ```cpp
 Expr VisitExpr_(const FunctionNode* func_node) override {
@@ -327,7 +327,7 @@ A：Relay 是 TVM 旧的高层 IR，2023 年后被 Relax 取代。Relax 面向�
 分布式、端侧部署。你现在读的源码都是 Relax 时代的。**骨架一样，细节升级。**
 
 **Q：装了 tvm 之后，我该从哪里开始"动手"？**
-A：第 10 课会给一份完整的"上岗路线图"：改 toycc → 给 TVM 写小 pass →
+A：接下来会给一份完整的"上岗路线图"：改 toycc → 给 TVM 写小 pass →
 跑官方测试 → 找 first issue。别急着啃大功能，从小 pass 开始。
 
 ---

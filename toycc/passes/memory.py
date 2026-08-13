@@ -99,28 +99,21 @@ class MemoryPlanningPass:
 
 def report(graph: Graph, entries: list[AllocEntry], input_shapes: dict[str, tuple]) -> str:
     """打印分配表 + 内存节省统计。"""
-    shapes = infer_shapes(graph, input_shapes)
-    topo = graph.topo_order()
     lines = []
     lines.append(f"{'张量':<14}{'形状':<16}{'元素数':>8}{'缓冲':>5}{'生→死':>9}")
-    n_naive, n_bufs, max_buf = 0, 0, 0
+    n_naive = 0
     for e in entries:
         lines.append(f"{e.tensor:<14}{str(e.shape):<16}{e.size:>8}{e.buf:>5}"
                      f"  {e.born_at}→{e.died_at}")
-    for e in entries:
         n_naive += e.size
-        if e.buf >= max_buf:
-            max_buf = e.buf
-    n_bufs = max_buf + 1
-    # 统计实际峰值内存:每时刻所有活跃缓冲区大小之和
-    peak = 0
-    for t in range(len(topo)):
-        used = sum(e.size for e in entries if e.born_at <= t < e.died_at)
-        peak = max(peak, used)
+    # 实际分配: 每个缓冲区按第一个占用它的张量定大小, 之后被复用
+    buf_sizes: dict[int, int] = {}
+    for e in entries:
+        buf_sizes.setdefault(e.buf, e.size)
+    total_alloc = sum(buf_sizes.values())
     lines.append("-" * 50)
     lines.append(f"朴素方案(每张量独占): {n_naive:>8} 元素")
-    lines.append(f"复用方案(峰值):       {peak:>8} 元素")
-    lines.append(f"缓冲区个数: {n_bufs} 个(复用率 "
-                 f"{len(entries)} 个张量)")
-    lines.append(f"内存节省: {(1 - peak/n_naive)*100:.0f}%")
+    lines.append(f"复用方案(总分配):     {total_alloc:>8} 元素 ({len(buf_sizes)} 个缓冲区)")
+    lines.append(f"缓冲区个数: {len(buf_sizes)} 个, 服务 {len(entries)} 个张量")
+    lines.append(f"内存节省: {(1 - total_alloc/n_naive)*100:.0f}%")
     return "\n".join(lines)
