@@ -174,6 +174,7 @@
 |---|---|---|
 | 附录A | C++ 阅读手册 | 读 08 课源码之前必看 |
 | 附录B | Windows → WSL2 → 装 TVM 环境 | 现在就做 |
+| 附录C | CUDA 编程指南（分章） | 想知道官方指南里都有什么、该读哪一部分 |
 
 ## 前置要求
 
@@ -210,6 +211,7 @@ demo 会打印：10 个算子 → 融合/布局/常量折叠 → 6 个算子，
 
 - `appendix_cpp.md` — 读编译器源码的最小 C++ 手册（从基础 C 起步）
 - `appendix_env.md` — Windows → WSL2 → 装 TVM 保姆级指南
+- `appendix_cuda/` — NVIDIA CUDA Programming Guide 中文译文（按 1.1/1.2/1.3 分章，README 含导读与索引）
 
 ## 心态建议
 

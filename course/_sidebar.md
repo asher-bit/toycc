@@ -102,4 +102,5 @@
 
 - [C++ 阅读手册](appendix_cpp.md)
 - [开发环境搭建](appendix_env.md)
+- [CUDA 编程指南](appendix_cuda/README.md)
 - [词汇表](glossary.md)
