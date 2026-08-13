@@ -184,6 +184,45 @@ CPU 和 GPU 之间怎么同步？——**事件 + 流（stream）**，第 30 课
 **这些也是编译器要生成的**——第 17 课的 VM 若加"异步执行"，就得
 在指令流里编码 event 操作。
 
+### 4.4 warp 内通信原语：shuffle / ballot / reduction
+
+同步原语解决"别出错"，warp 原语解决"**别绕路**"：warp 内 32 个
+线程要交换数据，naive 做法是写共享内存再读回来（几十周期）；
+**shuffle 指令直接在寄存器之间搬数据（1 条指令，几周期）**。
+
+```
+__shfl_down_sync(mask, val, 16)   ← 我的 val 发给"小 16 号"的邻居
+__ballot_sync(mask, pred)         ← 32 个线程的 bool 收成 32 位整数
+```
+
+> **手算：warp reduction——为什么 5 步能加完 32 个数**
+>
+> 任务：把 warp 里 32 个线程各自的 `val` 加成一个总和。
+>
+> ```
+> naive(共享内存): 写 32 个数 → bar.sync → 线程0 循环加 32 次 ≈ 几百周期
+>
+> shuffle 蝶形归约(每次把"距离减半"):
+>   步1: val += shfl_down(val, 16)   ← 高16号线程把值交给低16号
+>   步2: val += shfl_down(val, 8)    ← 16 个部分和变 8 个
+>   步3: += 4   步4: += 2   步5: += 1
+>   5 步后, 线程0 手里的 val = 全部 32 个数的总和
+>
+>   5 条 shuffle + 5 条加法 ≈ 20 周期, 比共享内存版快一个数量级
+> ```
+>
+> 每次 shfl_down 距离减半（16→8→4→2→1），所以 **log₂32 = 5 步**——
+> 蝶形归约是并行计算里最经典的图案之一，softmax 求分母、
+> LayerNorm 求均值、attention 的行最大值，全是它。
+> **编译器视角**：Triton/TVM 的 `tl.sum`/归约原语在 warp 级就
+> 下降成这 5 条 shuffle——你写 IR 的 reduction lowering 时，
+> 第一段就是生成蝶形归约。
+
+**为什么高性能部天天说 shuffle**：LLM 的 RMSNorm/softmax 每行
+都要归约（求和/最大值），而一行正好放进一个 warp——**warp 归约
+是 LLM kernel 里出现频率最高的并行图案**。ballot 则用于
+"warp 内投票"（如找第一个非零元素、对齐掩码计算）。
+
 ---
 
 ## 5. 对照 toycc / 自研芯片：你的 ISA 要定哪些原语

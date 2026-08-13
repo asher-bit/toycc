@@ -55,6 +55,13 @@
 - [ ] 二进制：ELF/cubin/fatbin、重定位、运行时 JIT、稳定中间层（第 29 课）
 - [ ] 驱动：命令缓冲/门铃、context/stream/event、GPU MMU、launch 开销（第 30 课）
 
+### 高性能部实战（第 31~35 课）——"模型在这张卡上为什么跑得不快"的账
+- [ ] LLM 推理性能：KV cache 容量账、prefill/decode 两阶段、TTFT/TPOT（第 31 课）
+- [ ] 分布式并行：DP/TP/PP/EP、ring allreduce 带宽模型、NVLink/NCCL/RDMA 层级（第 32 课）
+- [ ] 生产级量化：W4A16 账、GPTQ/AWQ/SmoothQuant、dequant 融合进 GEMM（第 33 课）
+- [ ] 手写 kernel 路线：Triton tile 抽象与下降链、CUTLASS 分层 tile（第 34 课）
+- [ ] 前沿速览：稀疏 2:4 / MoE / 投机解码 / MLPerf（第 35 课）
+
 > 全部打勾，你已经是"能进编译器会议室讨论"的水平了。
 >
 > **但"打勾"不能靠感觉——每个勾都要能当场证明**。给你一份自测方法：
@@ -71,6 +78,8 @@
 > | roofline | 给一个 kernel 的口算强度，立刻判断它是带宽受限还是算力受限 |
 > | GPU | 解释"为什么相邻线程读相邻地址 = 一次内存事务"（32 倍从哪来） |
 > | 工具链 | 画出 compiler/assembler/linker/driver/runtime 的调用链 |
+| KV 账 | 口算出：7B fp16 模型 decode 在 2TB/s 的卡上每 token 至少多久 |
+| allreduce | 说出 ring allreduce 每卡流量 2(N-1)/N×S，解释为什么 8 卡和 16 卡时间差不多 |
 >
 > **规则**：每一个打勾项，都挑上面的自测跑一遍。跑不出来 = 回去补那一课。
 > 这一节的产物是你自己的"一张能力体检表"，入职后每季度对着它更新一次。

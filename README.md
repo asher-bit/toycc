@@ -23,7 +23,7 @@ toycc/          迷你 AI 编译器（模仿 TVM 架构）
 ├── runtime/    numpy 参考执行器（正确性裁判）
 ├── schedule.py TIR 调度模拟器
 └── hardware.py 缓存/延迟硬件模型
-course/         新人手册、知识地图、岗位路径、31 课主线和各技术专题（Markdown）
+course/         新人手册、知识地图、岗位路径、36 课主线和各技术专题（Markdown）
 ```
 
 ## 课程内容

@@ -191,3 +191,21 @@
 - **门铃 (doorbell)**：CPU 写完命令队列后写 MMIO 通知 GPU 的机制（替代轮询，省功耗）。
 - **GPU MMU / 页表**：GPU 自己的地址翻译单元；隔离 + 惰性分配 + 统一寻址（UVA）的基础。
 - **性能计数器 (PMC)**：SM 内的硬件计数器；profiler 的全部指标都来自它。
+
+## 高性能部实战（第 31~35 课）
+
+- **prefill / decode**：LLM 推理两阶段；prefill 算力受限（GEMM），decode 带宽受限（GEMV）。
+- **TTFT / TPOT**：首 token 时间 / 每 token 时间——serving 系统分开报的两个指标。
+- **KV cache**：decode 缓存的历史 key/value；字节 = 2×层数×d×序列×batch×精度，显存第一约束。
+- **PagedAttention**：KV cache 的页式管理（虚拟内存思想），vLLM 提出，显存利用率 ~40%→90%。
+- **FlashAttention**：分块 + 在线 softmax，把 N² 中间矩阵消灭在 SRAM 里。
+- **DP/TP/PP/EP**：数据/张量/流水线/专家四种并行范式（切数据/切权重/切层/切专家）。
+- **allreduce / ring allreduce**：全归约原语；ring 版每卡 2(N-1)/N×S 字节，时间不随卡数涨。
+- **NCCL**：NVIDIA 集合通信库（allreduce/allgather/reduce-scatter/all-to-all 的实现）。
+- **NVLink / GPUDirect RDMA**：节点内 900GB/s 互联 / 网卡直读 GPU 显存跨节点通信。
+- **W4A16**：权重 4bit + 激活 fp16；带宽受限场景收益 ≈ 位宽压缩比。
+- **GPTQ / AWQ / SmoothQuant**：生产级量化算法（校准误差补偿 / 重要通道保护 / 激活平滑）。
+- **FP8（E4M3/E5M2）**：硬件原生 8bit 浮点；E4M3 精度优先（前向），E5M2 范围优先（梯度）。
+- **Triton**：块级 kernel 语言（Python DSL → MLIR 方言 → TTGIR → LLVM → PTX），PyTorch Inductor 默认后端。
+- **CUTLASS**：NVIDIA 模板化 kernel 库；CTA→warp→instruction 三级 tile 层次。
+- **MoE / 投机解码 / 结构化稀疏(2:4)**：容量计算解耦 / 用小模型猜大模型验证 / 硬件支持的 4 选 2 稀疏。

@@ -24,7 +24,7 @@
 ├── course/              ← 本课程
 │   ├── README.md        ← 你正在看的首页
 │   ├── runner.py        ← 每课的实验运行器
-│   ├── lesson00~30.md   ← 三十一课
+│   ├── lesson00~35.md   ← 三十六课
 │   ├── handbook/         ← 新员工总手册、岗位路径、知识地图
 │   ├── gpu/              ← CUDA/PTX/CUTLASS/Triton/Runtime/Profiler/NCCL 专题
 │   ├── tvm/              ← 真实 TVM 源码精读专题
@@ -47,7 +47,7 @@
 ## 主教材的结构
 
 > 主教材按学习依赖组织，而不是按项目名称组织：编译器基本闭环 → TVM 与调度 → 硬件、模型与性能 → GPU 编译器 → 工具链系统软件。
-> 进入仓库时，先看[新人手册总入口](handbook/README.md)了解全貌，再回到下面的 31 课按顺序学习。
+> 进入仓库时，先看[新人手册总入口](handbook/README.md)了解全貌，再回到下面的 36 课按顺序学习。
 
 ## 先看这里：新人手册总入口
 
@@ -154,6 +154,19 @@
 ### GPU 工具链专题
 
 第 21~24、27~30 课建立 GPU 芯片和工具链的主线；[GPU 工具链专题](gpu/README.md)再补充 CUDA、PTX、寄存器/ABI、CUTLASS、Triton、Runtime/Driver、Nsight、NCCL 和端到端排查。
+
+### ⑩ 高性能部实战：会议室语言（岗位专属）
+
+> 前五组课让你"会造编译器"；这五课让你"会参与讨论"——
+> 高性能部日常 80% 的话题（模型在卡上跑多快/几卡/什么精度）都在这五课的账里。
+
+| 课 | 主题 | 学到什么 | 动手 |
+|---|---|---|---|
+| 31 | **LLM 推理性能工程** | prefill/decode 两阶段账、KV cache 容量账、PagedAttention、FlashAttention 内存分析 | `runner 31` |
+| 32 | **分布式并行与通信** | DP/TP/PP/EP 切法、ring allreduce 带宽模型、NVLink/IB 层级、通信重叠 | `runner 32` |
+| 33 | **生产级量化** | W4A16 位宽比账、per-group/GPTQ/AWQ/SmoothQuant、dequant 融合、FP8 | `runner 33` |
+| 34 | **Triton 与 CUTLASS** | 块级抽象 vs 线程级、三级 tile 模板层次、三条 kernel 路线的分工 | `runner 34` |
+| 35 | **前沿专题速览** | 结构化稀疏、MoE、投机解码、MLPerf 四问、框架接入三路径 | `runner 35` |
 
 ### 附录（随时查）
 

@@ -622,6 +622,70 @@ def lesson27():
 """)
 
 
+def lesson35():
+    print("=== 第35课:前沿专题速览 ===")
+    print("""
+五个会议室高频前沿:
+  结构化稀疏(2:4)  硬件白送 2 倍, 但业界更爱量化+剪枝
+  MoE              容量/计算解耦; 代价 = all-to-all + grouped GEMM
+  投机解码         用 decode 的带宽空闲换吞吐(接受率~70% → 2~3 倍)
+  MLPerf           性能数字四问: batch/精度/序列/通信
+  框架接入         算子库(2周) → ONNX(折中) → Inductor 后端(1~2 人年)
+详细见 course/lesson35.md
+""")
+
+
+def lesson31():
+    print("=== 第31课:LLM推理性能工程 ===")
+    print("""
+三张账: 算力(FLOP) / 带宽(字节/秒) / 显存(字节)
+
+decode 上限手算: 7B fp16 = 14GB 权重, A100 2TB/s
+  每 token ≥ 14GB/2TB/s = 7ms → ~140 tok/s (带宽受限)
+prefill: 512 token 并行 → 算术强度 256 FLOP/B → 算力受限
+KV cache: 2×层数×d×序列×batch×精度 → 大模型显存第一约束
+PagedAttention = KV 的虚拟内存(页表); FlashAttention = tile+在线softmax
+详细见 course/lesson31.md
+""")
+
+
+def lesson32():
+    print("=== 第32课:分布式并行与通信 ===")
+    print("""
+四种并行: DP切数据(allreduce梯度) TP切权重(每层通信)
+          PP切层(点对点+气泡)     EP切专家(all-to-all最贵)
+
+ring allreduce: 每卡 2(N-1)/N×S 字节, 时间几乎不随卡数涨
+  70B 梯度 140GB, 8卡 NVLink 900GB/s → ~272ms
+带宽层级: HBM 3TB/s > NVLink 900GB/s > IB 50GB/s
+  → TP 在节点内, PP/DP 跨节点(3D 并行摆法)
+详细见 course/lesson32.md
+""")
+
+
+def lesson33():
+    print("=== 第33课:生产级量化 ===")
+    print("""
+W4A16: 权重4bit+激活fp16; decode 收益 ≈ 位宽压缩比
+  70B: 140GB→35GB → 14→57 tok/s(接近4倍); prefill 几乎不提速
+误差四招: per-group / GPTQ / AWQ / SmoothQuant
+关键工程: dequant 必须融进 GEMM(寄存器解压, 落显存=收益归零)
+FP8(E4M3/E5M2): 硬件原生 8bit 浮点, 训练推理通吃
+详细见 course/lesson33.md
+""")
+
+
+def lesson34():
+    print("=== 第34课:Triton 与 CUTLASS ===")
+    print("""
+Triton: 块级抽象(tl.load/tl.dot), 合并访问/掩码/流水编译器全包
+  下降链: Triton IR(MLIR方言) → TTGIR → LLVM → PTX
+CUTLASS: 人类最优经验 = C++ 模板层次(CTA→warp→instruction 三级 tile)
+分工: Triton 快迭代 | CUTLASS 追极致 | 编译器+autotune 兜底长尾/自研
+详细见 course/lesson34.md
+""")
+
+
 LESSONS = {
     1: lesson01, 2: lesson02, 3: lesson03, 4: lesson04,
     5: lesson05, 6: lesson06, 7: lesson07, 8: lesson08, 9: lesson09,
@@ -630,7 +694,8 @@ LESSONS = {
     18: lesson18, 19: lesson19, 20: lesson20, 21: lesson21,
     22: lesson22, 23: lesson23, 24: lesson24, 25: lesson25,
     26: lesson26, 27: lesson27, 28: lesson28, 29: lesson29,
-    30: lesson30,
+    30: lesson30, 31: lesson31, 32: lesson32, 33: lesson33,
+    34: lesson34, 35: lesson35,
 }
 
 
