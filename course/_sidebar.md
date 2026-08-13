@@ -103,4 +103,7 @@
 - [C++ 阅读手册](appendix_cpp.md)
 - [开发环境搭建](appendix_env.md)
 - [CUDA 编程指南](appendix_cuda/README.md)
+  - [1.1 引言](appendix_cuda/01_intro.md)
+  - [1.2 编程模型](appendix_cuda/02_programming_model.md)
+  - [1.3 CUDA 平台](appendix_cuda/03_platform.md)
 - [词汇表](glossary.md)
