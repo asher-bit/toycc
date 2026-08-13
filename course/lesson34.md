@@ -116,7 +116,7 @@ using Gemm = cutlass::gemm::device::Gemm<
 
 | 路线 | 适用 | 代价 |
 |---|---|---|
-| **Triton** | 新算子快速实现、框架自动生成（Inductor）、研究迭代 | 极致性能差 CUTLASS 10~20% |
+| **Triton** | 新算子快速实现、框架自动生成（Inductor）、研究迭代 | 极致性能有差距（差距口径见 FAQ） |
 | **CUTLASS** | GEMM/attention 类重算子、要榨干张量核 | 学习曲线陡、模板代码长 |
 | **编译器自动生成**（TVM/meta_schedule） | 长尾算子、自研芯片（没人手写） | 极致性能追不上手写库 |
 
@@ -145,7 +145,8 @@ using Gemm = cutlass::gemm::device::Gemm<
 **Q：Triton 的性能天花板在哪？**
 A：它封装了 warp 内细节，所以**warp specialization、TMA 的
 精细控制、寄存器级调度**这些最新技巧表达不了（或很难）。
-大 GEMM/attention 追极致性能的最后 10~20% 还是 CUTLASS/手写。
+大 GEMM/attention 上典型差距 10~20%——差距正是来自这些不可表达特性；
+追极致性能还是 CUTLASS/手写。
 
 **Q：Triton 和 TVM 是什么关系？**
 A：都是"AI 编译器"，哲学不同：TVM 是"搜索+生成"（ autotune
@@ -161,8 +162,7 @@ A：CUTLASS 本体绑定 NV 张量核指令。但它的**层次 tile 架构思�
 **Q：我要学到什么程度？**
 A：Triton 要**会写**（vector_add → fused_softmax → 简单 GEMM
 三级），CUTLASS 要**会读**（看得懂模板参数表 + 会改 epilogue）。
-高性能部面试常考："写一个 fused kernel 你怎么选 BLOCK"——
-答案就是 roofline + autotune。
+高性能部面试常考："写一个 fused kernel 你怎么选 BLOCK"——决策链：先算该 kernel 的算术强度，据此定 tile 大小，再在 SRAM/寄存器约束内枚举 2~3 档各跑一次 autotune。
 
 ---
 
@@ -186,7 +186,7 @@ A：Triton 要**会写**（vector_add → fused_softmax → 简单 GEMM
 
 不是性能赢（CUTLASS 更快），是**迭代速度**赢：一个新算子
 （如 RMSNorm、RoPE 变体）研究员下午写完 Triton 晚上就上卡测。
-性能工程的瓶颈常常是**人力不是机器**——这是工具选型的
+性能工程常常是**人力不是机器**：同一算子手写 CUDA 3 人日、Triton 0.5 人日，性能差 15%——多数算子这差价买人力划算。这是工具选型的
 真实逻辑，和 16 课"迭代速度优先"同源。
 
 ### B. Inductor 的接入点长什么样
@@ -206,7 +206,7 @@ PyTorch 图 → TorchDynamo 抓取 → AOTAutograd → Inductor 图优化
 34 课 Triton/CUTLASS（tile 是编程模型）——**同一个概念
 贯穿了整门课的五层**。AI 编译器 20 年的经验收敛成一句话：
 **tile 是连接"数学（GEMM）"和"机器（内存层次）"的最小抽象**。
-自研芯片的编程模型设计，先把 tile 这一层想明白，其余都是细节。
+自研芯片的编程模型设计，先把 tile 这一层想明白。
 ---
 
 **导航**：⬅ [上一节](lesson33.md)（第 33 课 · 生产级量化）　｜　[下一节](lesson35.md)（第 35 课 · 前沿专题速览）➡

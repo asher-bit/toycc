@@ -141,7 +141,7 @@ struct SimplifyRedundantTranspose : public OpRewritePattern<TransposeOp> {
     // op 的输入本身也是一个 transpose?
     auto parent = op.getOperand().getDefiningOp<TransposeOp>();
     if (!parent) return failure();                 // 不匹配, 放弃
-    rewriter.replaceOp(op, parent.getOperand());   // 用爷爷的输入替换掉这一对 transpose
+    rewriter.replaceOp(op, parent.getOperand());   // 用外层 transpose 的输入(即 x)替换两层 transpose
     return success();
   }
 };
@@ -207,7 +207,7 @@ LLVM IR → 第 25 课的后端 → 机器码
 
 **现实格局**：
 - **TVM**：成熟、AI 优化强、自带调度系统——但 IR 是自家一套
-- **MLIR**：基础设施统一、生态在涨（IREE/ torch-mlir / XLA 演进）——但调度要自己搭
+- **MLIR**：基础设施统一、生态在涨（IREE=通用 MLIR 推理运行时，torch-mlir=PyTorch 到 MLIR 的桥，XLA 在逐步用 MLIR 重写）——但调度要自己搭
 
 **对你自研芯片的判断**：
 - 想**最快出活**：基于 TVM 加后端
@@ -225,8 +225,8 @@ LLVM IR → 第 25 课的后端 → 机器码
 - **渐进式下降**：一层层降，每步都是合法 MLIR，降不了的留给下一跳
 - 自研芯片：MLIR 做前端/高层，后端可接 LLVM
 
-**到这里，课程从"看懂 toycc"一路走到了"能用工业级基础设施搭自研芯片工具链"。**
-剩下的就是动手——完成一个上手小任务，或在公司代码里找一个真实的 pass 读。
+**到这里，本课主线结束。**
+剩下的就是动手：把第 5 节的 pattern 改成匹配 `add(add(x,y),z)`，用 `mlir-opt` 跑一遍，验证嵌套 add 被拍平。
 
 ---
 

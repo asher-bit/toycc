@@ -154,7 +154,7 @@ __global__ void matmul_naive(float* A, float* B, float* C, int M, int N, int K) 
 **你自研芯片时，也要做自己的 profiler**——这是工具链的一部分。
 输出的指标就是这些：占用率、合并访问、发散。
 
-> **手算：给你一份 profiler 输出，读给公司听**
+> **手算：读一份真实 profiler 输出**
 >
 > 对上面的 naive matmul（M=N=K=1024）跑 ncu，拿到：
 >
@@ -194,7 +194,9 @@ __global__ void matmul_naive(float* A, float* B, float* C, int M, int N, int K) 
 自动应用到所有模型。
 
 > meta_schedule 不是凭空想的，它是"把人类调 kernel 的经验"
-> 编码成搜索空间。你写的 kernel 越懂，你的搜索空间就越聪明。
+> 编码成搜索空间。例如：只有你懂 tile 规则，才知道搜索空间里
+> 要写"tile 大小对齐 32 的倍数、padding 消除 bank conflict"这类
+> 约束——不懂 kernel 的人写出的搜索空间里全是非法候选。
 
 ---
 

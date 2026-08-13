@@ -247,8 +247,7 @@ for n in range(1):
 ```
 
 **为什么要有两份？** 没有 gcc 的机器上，Python 版能当场跑、当场验证
-（`python -m course.runner 7` 会对比 `max|Δ|`）。这就是"一个 IR 多后端"
-思想的教学版：C 是生产，Python 是验证。
+（`python -m course.runner 7` 会对比 `max|Δ|`）。
 
 ---
 
