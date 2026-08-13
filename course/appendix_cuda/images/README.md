@@ -1,12 +1,10 @@
-# CUDA 编程指南附录图片占位
+# CUDA 编程指南附录图片
 
-本目录用于存放本附录（`appendix_cuda/`）各章引用的官方图片。
+本目录存放本附录（`appendix_cuda/`）各章引用的官方图片，全部已收录。
 
-由于 NVIDIA 《CUDA Programming Guide》原图无法由翻译者保证版权与 CDN 稳定性，本仓库不直接内嵌官方原图。译文中按下面的文件名占位，请按需自行从 NVIDIA 官方页面（https://docs.nvidia.com/cuda/cuda-programming-guide/ 下载原图并按以下命名放入本目录）：
-
-| 占位文件名 | 来源 |
+| 文件名 | 来源 |
 |---|---|
-| `figure1-cpu-vs-gpu-transistors.png` | 1.1.2 节"图 1 GPU 把更多晶体管用于数据处理" —— **已收录** |
+| `figure1-cpu-vs-gpu-transistors.png` | 1.1.2 节"图 1 GPU 把更多晶体管用于数据处理" |
 | `figure2-cuda-cpu-gpu.png` | 1.2.2 节"图 2 CUDA 编程模型视角下的 CPU 与 GPU 组件及其连接" |
 | `figure3-grid-of-thread-blocks.png` | 1.2.2.1 节"图 3 线程块网格" |
 | `figure4-thread-blocks-on-sms.png` | 1.2.2.1 节"图 4 线程块在 SM 上调度" |
@@ -29,5 +27,3 @@
 | `figure21-unified-memory-paradigms.png` | 2.6.2.1 节"图 21 统一内存范式判定" |
 | `figure22-nvcc-high-level-flow.png` | 2.7.2 节"nvcc 基本编译流程" |
 | `figure23-nvcc-high-level-flow-multiple-arch.png` | 2.7.2 节"带多个 PTX 和 cubin 架构的 nvcc 编译流程" |
-
-放入文件后图片即自动渲染。如不补图，原文引用会显示为占位 alt 文本，不影响译文的可读性。
