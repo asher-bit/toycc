@@ -107,6 +107,7 @@
 - [2.1 CUDA C++ 入门](appendix_cuda/04_intro_cuda_cpp.md)
 - [2.2 CUDA Python 入门](appendix_cuda/05_intro_cuda_python.md)
 - [2.3 编写 SIMT Kernel](appendix_cuda/06_writing_simt_kernels.md)
+- [2.4 编写 Tile Kernel](appendix_cuda/07_writing_tile_kernels.md)
 
 **参考资料**
 

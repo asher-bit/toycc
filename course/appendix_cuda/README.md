@@ -66,6 +66,7 @@ CUDA 是 NVIDIA 开发的并行计算平台和编程模型，通过利用 GPU �
 | [04_intro_cuda_cpp.md](04_intro_cuda_cpp.md) | 2.1 Intro to CUDA C++ | NVCC 编译、kernel 发射、内存管理、同步、错误检查、集群 |
 | [05_intro_cuda_python.md](05_intro_cuda_python.md) | 2.2 Intro to CUDA Python | CUDA Python 生态、SIMT kernel、cuPy ndarray、同步、错误检查 |
 | [06_writing_simt_kernels.md](06_writing_simt_kernels.md) | 2.3 Writing SIMT Kernels | 线程层级、设备内存空间、内存性能/合并访问/bank 冲突、原子、占用率 |
+| [07_writing_tile_kernels.md](07_writing_tile_kernels.md) | 2.4 Writing Tile Kernels | Tile kernel 声明/发射、编译期常量、tile 空间 load/store、gather/scatter、矩阵乘、归约、原子、优化提示 |
 
 图片占位清单见 [images/README.md](images/README.md)。
 
