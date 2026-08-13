@@ -16,5 +16,13 @@
 | `figure8-simt-vs-tile.png` | 1.2.2.3 节"图 8 SIMT 和 tile 编程模型下程序员的视角" |
 | `figure9-tile-space-data-movement.png` | 1.2.2.3.2 节"图 9 tile 空间与数据搬运" |
 | `figure10-fatbin-container.png` | 1.3.4 节"图 10 可执行或库中的 fatbin 容器可含多版本 GPU 代码" |
+| `figure11-grid-of-thread-blocks.png` | 2.3.2 节"图 11 线程块网格" |
+| `figure12-coalesced-memory-access.png` | 2.3.4.1 节"图 12 合并的内存访问" |
+| `figure13-uncoalesced-memory-access.png` | 2.3.4.1 节"图 13 非合并的内存访问" |
+| `figure14-matrix-transpose-global-memory.png` | 2.3.4.1.1 节"图 14 用全局内存做矩阵转置" |
+| `figure15-strided-shared-memory-accesses.png` | 2.3.4.2 节"图 15 32 位 bank 大小模式下的跨步共享内存访问" |
+| `figure16-irregular-shared-memory-accesses.png` | 2.3.4.2 节"图 16 不规则的共享内存访问" |
+| `figure17-bank-structure-32x32.png` | 2.3.4.2.2 节"图 17 32×32 共享内存数组中的 bank 结构" |
+| `figure18-bank-structure-32x33.png` | 2.3.4.2.2 节"图 18 32×33 共享内存数组中的 bank 结构" |
 
 放入文件后图片即自动渲染。如不补图，原文引用会显示为占位 alt 文本，不影响译文的可读性。
