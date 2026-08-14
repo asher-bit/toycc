@@ -1,94 +1,205 @@
-# GPU 第 3 章：GPU ISA、寄存器分配与 ABI
+# GPU 第 3 章：GPU ISA、寄存器分配与 ABI——occupancy 与 spill 的账怎么算
 
 ## 1. 本章目标
 
-- 从“寄存器是硬件资源”过渡到“寄存器是编译器约束”；
-- 解释 occupancy、spill、调用约定和 kernel 元数据的关系；
-- 能阅读 PTX/SASS/MIR 中的资源使用信息；
-- 为自研 GPU 列出 ISA、ABI 和 code object 的最小设计清单。
+- 能把"寄存器是硬件资源"转译成"寄存器是编译器的分配约束"，并手算一个 kernel 的 occupancy；
+- 能解释 spill 在编译报告里长什么样、它由什么触发、有哪些不牺牲正确性的缓解手段；
+- 能列出 GPU ABI 必须约定的七类事项，并说出每一类被谁消费；
+- 能把 SASS 里的指令调度与"依赖链"对上号；
+- 能为自研 GPU 写出一页 ISA/ABI/code object 的最小设计清单。
 
-## 2. 三种寄存器视角
+前置：第 2 章的 PTX/SASS 概念（`.reg` 虚拟寄存器、`ptxas` 的资源账、cubin 元数据）。工具：`nvcc --ptxas-options=-v`（看资源）、`nvdisasm`（看 SASS）。
 
-| 视角 | 你要问的问题 |
-|---|---|
-| 源码变量 | 这个值的生命周期和并行粒度是什么？ |
-| 虚拟寄存器 | 编译器如何命名、合并、重用和降低它？ |
-| 物理寄存器 | 每个线程占多少硬件寄存器，是否造成 spill 或降低 occupancy？ |
+## 2. 工作中的问题长什么样
 
-一个 kernel 的寄存器使用量按线程计算，但 SM 的寄存器文件按 block/warp 分配。寄存器多不一定坏：它可能减少访存和同步；但超过阈值会限制同时驻留的 warp，甚至将局部值 spill 到 local memory。
+后端方向的日常提问：
 
-## 3. occupancy 不是性能本身
+```text
+"我把 unroll 调大一倍，occupancy 怎么从 50% 掉到 25%？"
+"这个 kernel 明明没写全局数组，为什么报告里有 800 字节的 local？"
+"自研 GPU 的 ABI 文档，第一版至少要写哪几页？"
+```
 
-粗略地说，驻留 block 数受多个资源共同限制：
+前两问是**寄存器分配**问题，第三问是**调用约定**问题。本章把这两个主题建成可手算的模型：occupancy 是"资源账的商"，spill 是"分配失败的证据"，ABI 是"编译器、加载器、调试器、模拟器共同遵守的协议"。
+
+## 3. 三种寄存器视角
+
+同一个"寄存器"，三层对象各指各的东西：
+
+| 视角 | 对象 | 你要问的问题 |
+|---|---|---|
+| 源码变量 | C++ 里的局部变量、累加器 | 这个值的生命周期和并行粒度是什么？ |
+| 虚拟寄存器 | PTX 里的 `%r0..%rN`（第 2 章第 5 节） | 编译器如何命名、合并、重用和降低它？ |
+| 物理寄存器 | SASS 里的 `R0..R255` | 每线程占多少硬件寄存器，是否造成 spill 或拉低 occupancy？ |
+
+寄存器使用量**按线程**计算，但寄存器文件**按 SM**提供：每 SM 有 65536 个 32 位寄存器（= 256 KB），SM 上最多驻留 2048 个线程。第一笔账：
+
+```text
+2048 线程把 65536 个寄存器平分 → 每线程 32 个
+所以: 每线程超过 32 个寄存器时, 满 occupancy(2048 线程)就必然被寄存器限制
+```
+
+一个 kernel 每线程用 14 个寄存器（第 2 章的 `vector_add` 实测量级），寄存器根本不是它的瓶颈；一个 GEMM 每线程用 128 个，寄存器就是第一约束。**寄存器多不一定是坏事**：它可能是为了缓存 tile、减少 global 访问；但超过阈值就要在 occupancy 上付账——这是下一节要算的账。
+
+## 4. occupancy 手算：资源账的商
+
+**occupancy（占用率）** = 实际驻留 warp 数 ÷ SM 支持的最大 warp 数。它衡量"SM 上同时住了多少 warp"——住得越多，一个 warp 等访存时越可能有别的 warp 顶上来（延迟隐藏能力越强）。
+
+驻留 block 数由四种资源取最小值：
 
 ```text
 resident_blocks = min(
-  thread_limit / threads_per_block,
-  register_file / registers_per_block,
-  shared_memory_limit / shared_memory_per_block,
-  architectural_limit
+  线程限制:     max_threads_per_SM / threads_per_block          (= 2048 / threads)
+  寄存器限制:   regs_per_SM / (regs_per_thread × threads_per_block)
+  共享内存限制: shared_per_SM / shared_per_block
+  架构限制:     每 SM 最大 block 数(Ampere 为 32)
 )
 ```
 
-实际架构还有 warp、cluster、调度器和动态共享内存约束。occupancy 主要说明隐藏延迟的能力，不等于 IPC、带宽或最终吞吐。一个高 occupancy 的 kernel 可能因为访存不合并或指令依赖而很慢；一个中等 occupancy 的 GEMM 可能凭借高寄存器复用和 Tensor Core 吞吐更快。
+### 例 1：vector_add 为什么是 100% occupancy
 
-## 4. spill 与调用边界
-
-寄存器压力来源包括：过大的 unroll、过多临时值、复杂地址计算、函数内联和过大的 tile。spill 会把虚拟寄存器放入线程私有的 local memory；从性能报告看，它可能表现为额外的 local load/store，而不是明显的“栈错误”。
-
-编译器工程师常用的手段：
-
-- 限制或改变 unroll；
-- 缩小 tile 或减少同时存活的累加器；
-- 重新安排计算和加载的交错关系；
-- 避免不必要的内联/临时对象；
-- 用 `--maxrregcount` 做实验，但不要把它当万能修复。
-
-## 5. GPU ABI 要约定什么
-
-至少要明确：
-
-- kernel 参数如何传递、参数布局和对齐；
-- 标量、指针、向量和聚合类型的表示；
-- 地址空间和指针宽度；
-- 特殊寄存器、返回值和调用边界；
-- 谁保存寄存器、如何处理栈/局部内存；
-- kernel 的 block size、寄存器数、shared memory 和 barrier 元数据放在哪里；
-- code object 如何携带架构、版本、重定位和调试信息。
-
-自研 GPU 不应只从 opcode 表开始设计。ABI、加载器、调试器和 runtime 如果没有共同协议，编译器生成的“正确机器码”仍无法稳定执行。
-
-## 6. 指令选择与调度
-
-后端需要把高层操作映射到目标 ISA，同时满足：
-
-- 操作数寄存器类和 bank 约束；
-- 指令延迟与吞吐；
-- load/use 距离和依赖链；
-- barrier、memory fence 和异步拷贝的顺序；
-- 特殊功能单元或 Tensor Core 的发射条件。
-
-这就是为什么仅仅把 LLVM IR 中的 `fmul/fadd` 翻成两条 GPU 指令还不够：真正性能取决于调度、数据复用、寄存器和内存层次的联合决策。
-
-## 7. 对照 LLVM/MLIR 和第 27~30 课
+取 threads = 256、每线程 14 个寄存器、shared = 0：
 
 ```text
-MLIR GPU/NVVM/LLVM Dialect
- → LLVM NVPTX backend / Triton backend
- → PTX / cubin
- → 第29课的二进制与加载
- → 第30课的 driver/command submission
- → 第27课的 simulator / cycle model
+线程限制:   2048 / 256      = 8 blocks
+寄存器限制: 65536 / (14×256) = 65536 / 3584 ≈ 18 blocks
+共享内存:   无限制
+架构限制:   32
+min = 8 blocks → 8 × (256/32) = 64 warps = 100% occupancy
 ```
 
-如果要支持自研 GPU，建议先建立功能 ISA/模拟器和 ABI 测试，再逐步加入调度、寄存器分配和性能模型。每个阶段都要有“同一输入、同一输出、可比较”的差分测试。
+结论：vector_add 被**线程上限**顶满，寄存器还剩大半没用。这就是为什么这种 kernel 再"优化寄存器"没有意义——约束不在寄存器。
 
-## 8. 练习
+### 例 2：一个 GEMM 的寄存器账
 
-1. 修改一个 GEMM tile，观察寄存器、occupancy 和时间的变化；
-2. 用编译器报告定位一个 local spill；
-3. 画出一个 kernel 参数从 host 到 device 入口的布局；
-4. 为自研 GPU 写一页 ABI 草案：参数、寄存器、地址空间、code object、错误码。
+取 threads = 256、每线程 128 个寄存器（GEMM 常见的累加器用量）：
 
-参考：[PTX Machine Model](https://docs.nvidia.com/cuda/parallel-thread-execution/#ptx-machine-model)、[LLVM Code Generator](https://llvm.org/docs/CodeGenerator.html)、第 27~30 课。
+```text
+寄存器限制: 65536 / (128 × 256) = 2 blocks → 2 × 8 = 16 warps = 25% occupancy
+```
 
+把每线程寄存器压到 64（比如 tile 减半、累加器减半）：
+
+```text
+65536 / (64 × 256) = 4 blocks → 32 warps = 50% occupancy
+```
+
+两笔账合成一句话：**每线程寄存器翻倍，occupancy 减半**。但这不是单向的坏事——128 寄存器版本每次从 global 读的 tile 更大、复用更多，实际带宽省下的时间可能远超 occupancy 损失。**occupancy 是延迟隐藏能力，不是性能本身**：一个 100% occupancy 的 kernel 可能因为访存不合并或依赖链太长而很慢；一个 25% occupancy 的 GEMM 可能靠高寄存器复用和 Tensor Core 吞吐更快。occupancy 的正确用法是当"约束定位工具"：先算出谁在限制驻留（线程/寄存器/shared/架构），再决定往哪优化。
+
+编译器给了两个直接旋钮：`__launch_bounds__(maxThreadsPerBlock, minBlocksPerMultiprocessor)` 让编译器把寄存器用量压进给定预算（会以 spill 为代价）；`--maxrregcount` 是全局粗暴版本。两个都只是"实验旋钮"，不是修复——真正的修复是下一节的事。
+
+## 5. spill：分配失败的证据
+
+**spill（溢出）**的定义：虚拟寄存器装不进物理寄存器文件时，编译器把它的值临时放进 local memory（物理上在 device 内存，第 1 章第 6 节）。判断一个 kernel 是否 spill，看 `ptxas -v` 的第三个数：
+
+```text
+ptxas info    : Used 128 registers, 0 bytes smem, 800 bytes spill
+                                             ^^^^^^^^^^^^^^^^^ 这里非零 = 有 spill
+```
+
+spill 的来源是**同时存活的临时值超过了物理寄存器数**。典型触发源：
+
+| 触发源 | 为什么挤爆寄存器 |
+|---|---|
+| 过大的 `#pragma unroll` | unroll 把循环体复制 N 份，每份的中间值同时存活 |
+| 过大的输出 tile | 每线程累加器数 ≈ tile 面积（8×8 就是 64 个累加器） |
+| 加载与计算不交错 | 一整块 tile 先全部加载，加载值在计算前全部存活 |
+| 函数内联过深 | 内联把被调函数的临时值并入调用者 |
+| 复杂地址计算 | 每次访问都保留一整套索引/指针中间值 |
+
+手算一个例子：GEMM 里每线程算 8×8 的输出 tile 需要 64 个累加器，加上指针、索引、边界和加载暂存，轻松超过 100 个——第 4 节例 2 的 128 寄存器就是这么来的。spill 的运行时表现是**额外的 local load/store**：SASS 里突然多出以 `LDL`/`STL` 开头、访问"局部内存"的指令。它不报错，所以从性能报告看是一串解释不了的慢，而不是"栈错误"。
+
+缓解手段与理由一一对应：
+
+- 限制 unroll → 减少同时存活的复制份数；
+- 缩小 tile → 累加器数随 tile 边长平方下降（8×8=64 → 4×4=16）；
+- 交错计算与加载（软件流水） → 缩短每个加载值的存活区间；
+- 把临时值的作用域收紧 → 让编译器可以重用寄存器；
+- 最后才是 `--maxrregcount` / `__launch_bounds__` 压预算做实验，并对比 spill 字节数与性能。
+
+## 6. GPU ABI 要约定什么
+
+**ABI（应用二进制接口）**是一套"程序之间怎么互相调用"的约定：参数怎么传、寄存器谁保存、栈怎么用。GPU 的 ABI 由编译器（生成侧）、加载器与驱动（消费侧）、调试器和模拟器（观测侧）共同消费，所以它是多方协议，不是编译器一家的内部事。最小清单七项：
+
+1. **kernel 参数传递**：参数放哪（`.param` 地址空间、常数内存的参数区）、怎么读（`ld.param`）、超过参数区的怎么传（经 global 内存中转）。对象：PTX 的 `.param` 声明（第 2 章第 5 节）；
+2. **类型与对齐**：标量/指针/向量/聚合类型的大小与对齐规则（如 8 字节对齐的指针、结构体的展开方式）。错一处，host 与 device 对同一段参数内存的解读就不一致；
+3. **地址空间与指针宽度**：通用指针 64 位、`.address_size 64`；各地址空间的编号。对象：第 1 章五种内存空间在指令后缀上的编码；
+4. **特殊寄存器**：`%tid`、`%ctaid`、`%ntid` 等硬件内建寄存器的语义与只读性。对象：第 2 章第 5 节的对照表；
+5. **栈与局部内存**：什么时候用 ABI 栈、栈从哪块内存来、局部内存按什么粒度分配。spill 就是这条约定的用户；
+6. **kernel 资源元数据**：每线程寄存器数、共享内存字节数、最大线程数写在哪、加载时如何校验。对象：第 2 章第 8 节的 cubin 元数据——launch 校验失败的信息源；
+7. **code object 格式**：如何携带架构、版本、重定位表与调试信息。对象：cubin 的 ELF 结构。
+
+一句话总结为什么自研 GPU 不能只从 opcode 表开始：**opcode 表只是"指令长什么样"，ABI 决定"一段程序能不能被编译、加载、调试、在模拟器里复现"**。没有共同协议，编译器生成的"正确机器码"依然无法稳定执行——这七项就是协议的第一版目录。
+
+## 7. 指令选择与调度：SASS 层的两个后端动作
+
+把高层操作映射到目标 ISA 时，后端要做两个动作：**指令选择**（选哪些指令）和**指令调度**（按什么顺序发）。选与排都要满足五类约束：
+
+| 约束 | 一句话解释 | 违反的后果 |
+|---|---|---|
+| 寄存器 bank / 操作数限制 | SASS 指令的操作数有固定格式（如三操作数、立即数范围） | 需要额外的 MOV 拆解 |
+| 指令延迟与吞吐 | FMA 类指令延迟约 4 周期（近似值）、吞吐更高 | 依赖链密集时发射槽空转 |
+| load/use 距离 | 加载结果要等 N 周期才能被用 | 寄存器等数据，stall |
+| barrier / fence 顺序 | 同步指令的相对位置不可重排 | 正确性错误，比慢更糟 |
+| 特殊单元发射条件 | Tensor Core 指令有自己的操作数布局要求 | 无法用上该单元 |
+
+用一个调度例子说明"重排"在干什么。假设两条独立的加法链（示意 SASS，寄存器号随编译变化）：
+
+```text
+调度前(按源码顺序, 依赖链串在一起):
+  FADD R1, R2, R3        ; 链 A 第一步
+  FADD R4, R1, R5        ; 链 A 第二步 ← 必须等 R1
+  FADD R6, R7, R8        ; 链 B 第一步
+  FADD R9, R6, R10       ; 链 B 第二步 ← 必须等 R6
+
+调度后(把 B 第一步插进 A 的等待期):
+  FADD R1, R2, R3        ; 链 A 第一步
+  FADD R6, R7, R8        ; 链 B 第一步(与 R1 无关, 填 A 的延迟)
+  FADD R4, R1, R5        ; 链 A 第二步(此时 R1 已就绪)
+  FADD R9, R6, R10       ; 链 B 第二步
+```
+
+同样的 4 条指令，后一种排列让 R1/R6 的等待期被对方填上。这就是为什么"把 LLVM IR 里的 `fmul/fadd` 逐条翻成 GPU 指令"只完成了编译任务的零头：**真正决定性能的是调度、复用、寄存器与内存层次之间的联合决策**——这正是 `ptxas` 存在的意义（第 2 章第 6 节）。
+
+## 8. 从 NVIDIA 到自研 GPU：分层推进清单
+
+支持一块自研 GPU 时，建议按下面的顺序推进，每阶段都有独立的可检查产物：
+
+```text
+阶段 1  功能 ISA + 功能模拟器      产物: 差分测试通过(同一程序, 模拟器 vs 参考结果一致)
+阶段 2  ABI 草案 + 参数布局测试    产物: 一页 ABI 文档 + 参数传递单测
+阶段 3  指令选择 + 指令调度        产物: 高层操作到 ISA 的映射表 + 依赖链重排示例
+阶段 4  寄存器分配 + occupancy 账  产物: 每 kernel 的寄存器/spill 报告
+阶段 5  性能模型 + 周期近似        产物: 实测 vs 模型的偏差分析
+```
+
+每阶段的验收都回到同一句话：**同一输入、同一输出、可比较**——差分测试是这五个阶段的共同底座。
+
+## 9. 常见错误与归因
+
+| 现象 | 根因 | 定位手段 |
+|---|---|---|
+| occupancy 掉一半 | 每线程寄存器翻倍，触到寄存器上限 | 按第 4 节公式逐项算四个限制 |
+| `ptxas -v` 显示 spill 非零 | 同时存活临时值超物理寄存器 | 查 unroll/tile/加载计算交错 |
+| SASS 里出现 `LDL`/`STL` 指令 | spill 的运行时形态 | 反汇编对照 + 报告 spill 字节数 |
+| 参数结果偶尔错 | host/device 对参数布局理解不一致（ABI 违规） | 检查结构体对齐、指针宽度 |
+| launch 报资源超限 | 资源元数据与配置不符 | 对照 cubin 元数据（第 2 章第 8 节） |
+| 调 `--maxrregcount` 性能反降 | 强压寄存器 → 大量 spill 抵消收益 | 对比前后 spill 字节数与实测时间 |
+
+## 10. 检查点
+
+完成以下四项才算通过本章：
+
+1. 手算：threads = 128、每线程 40 寄存器、shared = 24 KB 的 kernel，在 Ampere SM（2048 线程 / 65536 寄存器 / 164 KB shared / 32 blocks 上限）上的 resident_blocks 与 occupancy；
+2. 写出一个"spill 由 0 变非 0"的最小代码改动（提示：把一个 64 个 float 的局部数组改成全部同时使用）；
+3. 把第 2 章 `vector_add` 的参数传递路径写成三行：host 侧 `<<<...>>>` 实参 → `.param` 声明 → `ld.param` 读取；
+4. 为自研 GPU 写一页 ABI 草案目录，逐项标注"谁消费这一条"（编译器/加载器/调试器/模拟器）。
+
+## 11. 下一步与扩展阅读
+
+本章向下摸到了 SASS 与寄存器分配。下一章（GPU 04：CUTLASS / CuTe）回到软件层，看人类把本章的 occupancy、spill、bank 账封装成了什么样的模板抽象；主教材第 29 课则沿 code object 继续拆 ELF 与重定位。
+
+- 官方：[PTX Machine Model](https://docs.nvidia.com/cuda/parallel-thread-execution/#ptx-machine-model)、[LLVM Code Generator 文档](https://llvm.org/docs/CodeGenerator.html)（寄存器分配与指令调度的通用框架）；
+- 与本课程的关系：MLIR 的 GPU/NVVM/LLVM Dialect → LLVM NVPTX backend → PTX/cubin 的下降链，每一层都在消费本章的"约束"——Dialect 层管语义、backend 层管分配与调度、cubin 层管元数据。
+
+**导航**：⬅ [上一章](02_cuda_toolchain_ptx.md)（CUDA 工具链与 PTX）　｜　[下一章](04_cutlass_cute.md)（CUTLASS / CuTe）➡

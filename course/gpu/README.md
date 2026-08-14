@@ -18,15 +18,15 @@ CUDA C++ / Triton / CUTLASS
 
 ## 分章学习
 
-1. [CUDA 编程模型：线程、内存与同步](01_cuda_programming_model.md)
-2. [CUDA 工具链与 PTX：从 `.cu` 到 `cubin`](02_cuda_toolchain_ptx.md)
-3. [GPU ISA、寄存器分配与 ABI](03_gpu_isa_registers_abi.md)
+1. [CUDA 编程模型：线程、内存与同步如何映射到硬件](01_cuda_programming_model.md)
+2. [CUDA 工具链与 PTX：从 `.cu` 到可执行代码](02_cuda_toolchain_ptx.md)
+3. [GPU ISA、寄存器与 ABI：occupancy 与 spill 的账](03_gpu_isa_registers_abi.md)
 4. [CUTLASS / CuTe：高性能 GEMM 的软件分层](04_cutlass_cute.md)
 5. [Triton：从 Python kernel 到 GPU 代码](05_triton_compiler.md)
 6. [Runtime / Driver：模块、内存、Stream、Event 与提交](06_runtime_driver.md)
 7. [性能分析：从 benchmark 到 Nsight 指标](07_profiling_performance.md)
 8. [多 GPU、NCCL 与通信计算重叠](08_multi_gpu_nccl.md)
-9. [端到端案例：一个算子从模型到 GPU](09_end_to_end.md)
+9. [端到端案例：一个算子从模型到 GPU 的完整排查](09_end_to_end.md)
 
 ## 推荐顺序
 

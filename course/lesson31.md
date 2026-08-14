@@ -199,6 +199,17 @@ allreduce 的带宽模型长什么样。
 
 ---
 
+## 8. 本课检查点
+
+完成以下四项才算通过本课（每题都能在纸上或 `python -m course.runner 31` 里验证）：
+
+1. 手算：13B 模型 fp16（26 GB）在 1.55 TB/s 带宽卡上的 decode 上限（tok/s），并说清这个上限是带宽墙还是算力墙；
+2. 手算：7B 模型（L=32, d=4096）fp16、batch=4、序列 2048 的 KV cache 大小，判断它是否超过权重本身；
+3. 给 naive attention 的 8K 序列算中间矩阵字节数，并用一句话说明 FlashAttention 把它怎么处理掉的；
+4. 用"算力/带宽/显存"三张账各写一句：为什么 continuous batching 能提升吞吐、为什么它不改变单 token 的 TPOT 下限。
+
+---
+
 ## 深层拓展：推理性能的三个进阶问题
 
 ### A. 为什么 decode 合并 batch 也不"省带宽"

@@ -555,135 +555,215 @@ MLIR = 可扩展的多层 IR 框架, 一切皆是 Operation
 
 def lesson30():
     print("=== 第30课:驱动与命令提交 ===")
-    print("""
-CPU → GPU 的命令提交(每 launch 的固定开销):
-  用户态命令构造  ~1 us
-  系统调用        ~1~3 us
-  门铃+硬件响应   ~0.5 us
-  ────────────────
-  合计 ~3~5 us/launch
+    # 手算1: 每 launch 的固定开销
+    t_user, t_syscall, t_doorbell = 1.0, 3.5, 0.5   # μs(近似值, 合计 3~5μs 区间内)
+    launch = t_user + t_syscall + t_doorbell
+    print(f"  launch 开销 = {t_user} + {t_syscall} + {t_doorbell} = {launch:.1f} μs")
+    assert abs(launch - 5.0) < 1e-9
 
-如果 kernel 只跑 2 us → 实测吞吐 28%(70% 时间在发射没在算)
-解法: 持久 kernel / 命令合并(cuGraph) / 编译器融合(第3课)
+    # 手算2: 小 kernel 的吞吐利用率
+    kernel = 2.0                                   # μs
+    eff = kernel / (kernel + launch)
+    print(f"  2μs kernel 吞吐利用率 = {kernel}/({kernel}+{launch}) = {eff:.0%}")
+    print(f"  (70% 时间在发射, 不在计算)")
+    assert abs(eff - 2 / 7.0) < 1e-9
 
-内存管理: GPU 有自己的 MMU 页表 → 隔离 + 惰性分配 + UVA
-  频繁小分配 ≈ 2~5us/次 → 内存池解决(第6课思想的运行时版)
+    # 盈亏平衡点: kernel 多短时 launch 开销占一半?
+    print(f"  开销占 50% 的 kernel 长度 = {launch:.1f} μs (t/(t+{launch})=0.5 → t={launch})")
 
-上下文三件套: context(隔离) / stream(并行) / event(同步)
-详细见 course/lesson30.md
-""")
+    # 手算3: 1000 次小 launch vs 合并成一次
+    many = 1000 * (kernel + launch) / 1000         # ms
+    one = (1000 * kernel + launch) / 1000          # ms
+    print(f"  1000 次 2μs launch 总耗时 {many:.1f} ms; 合并成一次 {one:.1f} ms")
+    assert many > one * 3
+
+    # 手算4: GPU MMU 页表
+    page, pte = 4096, 8
+    pages = 8 * 1024**3 // page                    # 8GB 显存, 4KB 页
+    print(f"  8GB 显存 / 4KB 页 = {pages} 页 × {pte}B/PTE = {pages*pte/1e6:.0f} MB 页表")
+    print("  观察: 命令提交的固定账、合并的收益、MMU 的代价, 三者都可复算。")
 
 
 def lesson29():
     print("=== 第29课:二进制格式与模块加载 ===")
-    print("""
-编译产物最后一公里:
-  汇编 → 目标文件(ELF) → 链接(重定位) → 加载 → 运行
+    # 手算1: 重定位 —— 链接器如何修正一个悬空地址
+    text_base, text_size = 0x100, 0x40             # .text 在对象文件内
+    data_base, data_size = 0x140, 0x20             # .data
+    reloc = (0x108, "x", 0)                        # 在 .text 内引用符号 x, addend=0
+    sym_off = 0x8                                   # x 在 .data 内的偏移
+    link_text, link_data = 0x4000, 0x4000 + text_size
+    s_addr = link_data + sym_off                    # 符号最终地址
+    patch_at = link_text + (reloc[0] - text_base)   # 重定位写入点
+    patch_val = s_addr + reloc[2]                   # S + A
+    print(f"  重定位: 在 0x{patch_at:x} 写入符号 x 的地址 0x{patch_val:x} (=S+A)")
+    assert patch_at == 0x4008 and patch_val == 0x4048
 
-GPU 特殊:
-  cubin  = ELF 变体 + kernel 元数据(网格/寄存器/共享内存)
-  fatbin = 多代 cubin + PTX"源码"(前向兼容: PTX→新芯片 JIT 重编)
-  策略  = 承诺"稳定中间层"兼容, 不承诺机器码兼容
+    # 手算2: cubin 元数据校验 launch 配置
+    meta = {"maxThreads": 1024, "sharedBytes": 48 * 1024}
 
-自研芯片四件套: 指令编码规范 / 镜像格式 / 加载器 / 稳定中间层
-详细见 course/lesson29.md
-""")
+    def check(threads, shared):
+        return threads <= meta["maxThreads"] and shared <= meta["sharedBytes"]
+
+    ok1, ok2 = check(256, 48 * 1024), check(256, 64 * 1024)
+    print(f"  launch 256线程/48KB shared: {'通过' if ok1 else '拒绝'} (元数据校验)")
+    print(f"  launch 256线程/64KB shared: {'通过' if ok2 else '拒绝'} (超 static 上限)")
+    assert ok1 and not ok2
+    print("  观察: 加载器在 launch 前拿 cubin 元数据逐项校验, 非法配置当场拦下。")
 
 
 def lesson28():
     print("=== 第28课:GPU内存模型与并发原语 ===")
-    print("""
-并发三问:
-1. 丢更新: ld/add/st 三步可被插入 → atom.add 一步不可分割
-2. 乱序:   不同地址的访存可重排 → fence/release-acquire 成对
-3. 死锁:   bar.sync 必须全员必经路径, 放条件分支里 = 卡死
+    # 实验1: 丢更新 —— "读-改-写"三步被插入
+    counter = 0
+    read_a, read_b = counter, counter              # 两个线程都读到旧值 0
+    counter = read_a + 1                           # 线程A写回 1
+    counter = read_b + 1                           # 线程B写回 1 ← 覆盖, A 的更新丢失
+    print(f"  无原子: 两线程各加1, 最终 = {counter} (丢 1 次更新)")
+    assert counter == 1
 
-GPU 弱内存序 = 吞吐优先的设计决策(默认宽松, 显式同步自费)
+    # 实验2: 32 线程各加 1 的最坏情况(全部读到 0 再写回)
+    n = 32
+    reads = [0] * n
+    final = max(r + 1 for r in reads)
+    lost = n - 1
+    print(f"  无原子: {n} 线程各加1, 最坏最终 = {final}, 丢 {lost} 次更新")
+    assert lost == n - 1
 
-同步层级: warp(锁步) → block(bar.sync) → grid → host(event)
-自研 ISA 内存模型章: 原子集 + 内存序 + fence + bar + 事件
-详细见 course/lesson28.md
-""")
+    # 实验3: 原子指令 —— 一步不可分割
+    counter = 0
+    for _ in range(n):
+        counter += 1                               # 等价于 atom.add 的语义
+    print(f"  原子:   {n} 线程各加1, 最终 = {counter} (不可分割, 不丢)")
+    assert counter == n
+    print("  观察: 原子保证不丢, 但冲突时在硬件上串行化 —— 正确性与吞吐的交换。")
 
 
 def lesson27():
     print("=== 第27课:模拟器 ===")
     print("""
-模拟器 = ISA 规范的可执行版本, 工具链第一件交付物
+ 模拟器 = ISA 规范的可执行版本, 工具链第一件交付物
 
-三层模型:
-  功能模型(ISS)  指令精确   ~1e8 条/秒   回答"对不对"
-  周期模型       周期近似   ~1e6 条/秒   回答"快不快"
-  RTL 仿真       信号精确   ~1e4 条/秒   回答"电路对不对"
+ 三层模型:
+   功能模型(ISS)  指令精确   ~1e8 条/秒   回答"对不对"
+   周期模型       周期近似   ~1e6 条/秒   回答"快不快"
+   RTL 仿真       信号精确   ~1e4 条/秒   回答"电路对不对"
 
-验证: 差分测试(独立参考实现 + 覆盖率门禁)
-调试: 编译器输出 → 加载器 → 模拟器 ← 调试器挂断点
-详细见 course/lesson27.md
+ 验证: 差分测试(独立参考实现 + 覆盖率门禁)
+ 调试: 编译器输出 → 加载器 → 模拟器 ← 调试器挂断点
+ 详细见 course/lesson27.md
 """)
 
 
 def lesson35():
     print("=== 第35课:前沿专题速览 ===")
-    print("""
-五个会议室高频前沿:
-  结构化稀疏(2:4)  硬件白送 2 倍, 但业界更爱量化+剪枝
-  MoE              容量/计算解耦; 代价 = all-to-all + grouped GEMM
-  投机解码         用 decode 的带宽空闲换吞吐(接受率~70% → 2~3 倍)
-  MLPerf           性能数字四问: batch/精度/序列/通信
-  框架接入         算子库(2周) → ONNX(折中) → Inductor 后端(1~2 人年)
-详细见 course/lesson35.md
-""")
+    # 手算1: 投机解码的期望产出
+    for alpha in (0.5, 0.7, 0.8):
+        total = 1 / (1 - alpha)
+        print(f"  投机解码 α={alpha}: 期望产出 {total:.2f} 倍(净增 {total-1:.2f} 倍)")
+    assert abs(1 / (1 - 0.7) - 3.33) < 0.01
+
+    # 手算2: 2:4 结构化稀疏
+    print(f"  2:4 稀疏: 权重 140GB → {140/2:.0f} GB(字节账); 每 4 权重只算 2 个(算力账)")
+
+    # 手算3: MoE 容量/计算解耦
+    print(f"  MoE: 8×7B=56B 参数, 每 token 激活 2 专家 = {2*7:.0f}B 计算 → 解耦")
+
+    # 手算4: 框架接入三路径成本
+    for name, cost in (("B 算子库", "2 周"), ("C ONNX", "折中"), ("A Inductor 后端", "1~2 人年")):
+        print(f"  接入路径 {name}: {cost}")
+    print("  观察: 每条前沿名词都能落回 算力/带宽/显存/接入成本 四本账。")
 
 
 def lesson31():
     print("=== 第31课:LLM推理性能工程 ===")
-    print("""
-三张账: 算力(FLOP) / 带宽(字节/秒) / 显存(字节)
+    # 手算1: decode 上限
+    w_gb, bw = 14.0, 2.0                           # 7B fp16 权重(GB), 2TB/s = 2GB/ms
+    ms = w_gb / bw                                # GB / (GB/ms) = ms
+    tok = 1000 / ms
+    print(f"  decode: {w_gb}GB / {bw}TB/s = {ms:.1f} ms/token → 上限 ~{tok:.0f} tok/s")
+    assert abs(ms - 7.0) < 1e-9
 
-decode 上限手算: 7B fp16 = 14GB 权重, A100 2TB/s
-  每 token ≥ 14GB/2TB/s = 7ms → ~140 tok/s (带宽受限)
-prefill: 512 token 并行 → 算术强度 256 FLOP/B → 算力受限
-KV cache: 2×层数×d×序列×batch×精度 → 大模型显存第一约束
-PagedAttention = KV 的虚拟内存(页表); FlashAttention = tile+在线softmax
-详细见 course/lesson31.md
-""")
+    # 手算2: prefill 512 token
+    flop = 7e9 * 2 * 512
+    tf = 312.0
+    ms_c = flop / 1e12 / tf * 1000
+    print(f"  prefill: {flop/1e12:.1f} TFLOP / {tf} TFLOPS = {ms_c:.0f} ms(算力)"
+          f" vs {ms:.0f} ms(带宽) → 算力受限")
+    assert ms_c > ms
+
+    # 手算3: KV cache
+    kv = 2 * 32 * 4096 * 4096 * 1 * 2
+    print(f"  KV: 7B batch=1 序列4096 = {kv/1e9:.1f} GB; batch=32 = {kv*32/1e9:.0f} GB"
+          f" (权重的 {kv*32/1e9/14:.0f} 倍)")
+    assert abs(kv / 1e9 - 2.15) < 0.05
+
+    # 手算4: FlashAttention 消灭的中间结果
+    mid = 8192 * 8192 * 2
+    print(f"  naive attention 8K 序列中间矩阵 = {mid/1e6:.0f} MB (FlashAttention 消灭它)")
+    print("  观察: 三张账(算力/带宽/显存)全部可复算, 这就是会议室语言的底稿。")
 
 
 def lesson32():
     print("=== 第32课:分布式并行与通信 ===")
-    print("""
-四种并行: DP切数据(allreduce梯度) TP切权重(每层通信)
-          PP切层(点对点+气泡)     EP切专家(all-to-all最贵)
+    # 手算1: ring allreduce 每卡发送量
+    n, s, bw = 8, 140.0, 900.0                    # 8卡, 140GB 梯度, 900GB/s
+    per_rank = 2 * (n - 1) / n * s
+    ms = per_rank / bw * 1000
+    print(f"  ring allreduce: 每卡 2×7/8×{s:.0f} = {per_rank:.0f} GB"
+          f" / {bw}GB/s = {ms:.0f} ms")
+    assert abs(per_rank - 245.0) < 1e-9
 
-ring allreduce: 每卡 2(N-1)/N×S 字节, 时间几乎不随卡数涨
-  70B 梯度 140GB, 8卡 NVLink 900GB/s → ~272ms
-带宽层级: HBM 3TB/s > NVLink 900GB/s > IB 50GB/s
-  → TP 在节点内, PP/DP 跨节点(3D 并行摆法)
-详细见 course/lesson32.md
-""")
+    # 手算2: 流水线气泡
+    p = 4
+    for m in (1, 8, 32):
+        bubble = (p - 1) / (m + p - 1)
+        print(f"  PP: {p}卡 micro-batch={m:2d} → 气泡 {bubble:.0%}")
+    assert abs((4 - 1) / (32 + 4 - 1) - 0.086) < 0.01
+
+    # 手算3: 加速比上限与重叠收益
+    calc, comm = 800.0, 272.0
+    cap = calc / (calc + comm)
+    print(f"  加速比上限 = {calc:.0f}/({calc:.0f}+{comm:.0f}) = {cap:.0%};"
+          f" 完美重叠 = max({calc:.0f},{comm:.0f}) = {max(calc, comm):.0f} ms")
+    print("  观察: 通信账决定切法与摆法 —— TP 节点内, PP/DP 跨节点。")
 
 
 def lesson33():
     print("=== 第33课:生产级量化 ===")
-    print("""
-W4A16: 权重4bit+激活fp16; decode 收益 ≈ 位宽压缩比
-  70B: 140GB→35GB → 14→57 tok/s(接近4倍); prefill 几乎不提速
-误差四招: per-group / GPTQ / AWQ / SmoothQuant
-关键工程: dequant 必须融进 GEMM(寄存器解压, 落显存=收益归零)
-FP8(E4M3/E5M2): 硬件原生 8bit 浮点, 训练推理通吃
-详细见 course/lesson33.md
-""")
+    # 手算1: W4A16 decode 收益
+    fp16_ms = 140 / 2.0                            # GB / (GB/ms) = ms
+    w4_ms = 35 / 2.0
+    print(f"  decode: fp16 {fp16_ms:.0f} ms/token(~{1000/fp16_ms:.0f} tok/s)"
+          f" → W4A16 {w4_ms:.1f} ms(~{1000/w4_ms:.0f} tok/s), {fp16_ms/w4_ms:.1f} 倍")
+    assert abs(fp16_ms / w4_ms - 4.0) < 1e-9
+
+    # 手算2: per-group scale 的额外字节
+    extra = 7e9 / 128 * 2
+    print(f"  per-group(128) scale 额外 = {extra/1e9:.2f} GB = 35GB 的 {extra/1e9/35:.2%}")
+
+    # 手算3: dequant 落显存的反面教材
+    fused, unfused = 35.0, 35.0 + 140.0 + 140.0
+    print(f"  流量: 融合 {fused:.0f} GB vs 不融合 {unfused:.0f} GB ({unfused/fused:.0f} 倍)")
+    assert abs(unfused / fused - 9.0) < 1e-9
+    print("  观察: 量化收益 = 位宽压缩比; dequant 必须融进 GEMM, 否则倒亏。")
 
 
 def lesson34():
     print("=== 第34课:Triton 与 CUTLASS ===")
+    # 手算: num_stages 的 shared 内存账(Ampere 每 SM 164KB)
+    bk = 64
+    tile = 128 * bk * 2 * 2                        # A tile + B tile, fp16
+    limit = 164 * 1024
+    for stages in (2, 4, 5, 6):
+        used = stages * tile
+        ok = "可" if used <= limit else "不可"
+        print(f"  BLOCK=128×128, BK={bk}: stages={stages} → shared {used//1024:3d} KB"
+              f" [{ok} (上限 {limit//1024} KB)]")
+    assert 6 * tile > limit >= 4 * tile
+
     print("""
-Triton: 块级抽象(tl.load/tl.dot), 合并访问/掩码/流水编译器全包
-  下降链: Triton IR(MLIR方言) → TTGIR → LLVM → PTX
-CUTLASS: 人类最优经验 = C++ 模板层次(CTA→warp→instruction 三级 tile)
-分工: Triton 快迭代 | CUTLASS 追极致 | 编译器+autotune 兜底长尾/自研
-详细见 course/lesson34.md
-""")
+  分工: Triton 快迭代 | CUTLASS 追极致 | 编译器+autotune 兜底长尾/自研
+  观察: stages 触顶 shared → occupancy 掉(第3课的账在 Triton 里变成 Config)。""")
 
 
 LESSONS = {
