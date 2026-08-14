@@ -329,7 +329,7 @@ def lesson14():
     # 两个结构问题的答案
     print("  循环是显式对象的层: TIR(For 节点) / MLIR(scf.for + iter_args)")
     print("  合流的两种写法: LLVM phi(按前驱边选值) vs MLIR block argument(入口取值)")
-    print("  观察: 五层 IR 共享 SSA 与"层次越低越具体"的下降逻辑。")
+    print("  观察: 五层 IR 共享 SSA 与「层次越低越具体」的下降逻辑。")
 
 
 def lesson10():
