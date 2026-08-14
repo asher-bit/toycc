@@ -30,7 +30,7 @@ decode 在小 batch 下是带宽受限（瓶颈在"读权重"不在"算"），
 > **手算 1：70B 从 fp16 到 W4A16**
 >
 > ```
-> fp16:  140 GB → A100(2TB/s) decode 上限 = 140/2000 = 70 ms/token ≈ 14 tok/s
+> fp16:  140 GB → A100 80GB(2TB/s) decode 上限 = 140/2000 = 70 ms/token ≈ 14 tok/s
 > W4A16: 35 GB  → 35/2000 = 17.5 ms/token ≈ 57 tok/s   ← 接近 4 倍
 > ```
 >

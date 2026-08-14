@@ -69,7 +69,7 @@ arithmetic intensity(算术强度) = FLOPs / bytes moved
 可达性能上限 ≈ min(峰值计算吞吐, 峰值带宽 × 算术强度)
 ```
 
-手算一遍 vector_add 在 A100 上的上限（fp32，峰值算力 19.5 TFLOPS、带宽 1.55 TB/s）：
+手算一遍 vector_add 在 A100 上的上限（fp32 口径，A100 40GB 版：峰值算力 19.5 TFLOPS、带宽 1.55 TB/s）：
 
 ```text
 强度 = 1 FLOP / 12 B ≈ 0.08 FLOP/B (第 1 章已推)

@@ -34,17 +34,19 @@ decode:   每次只生成 1 个 token, 循环 N 次        → 小 GEMV, 带宽�
 > **手算 1：decode 为什么注定带宽受限**
 >
 > 7B 模型，fp16 权重 = 7B × 2B = **14 GB**。每生成 1 个 token，
-> 都要把**全部权重读一遍**（前向一次）。A100 HBM 带宽 ≈ 2 TB/s：
+> 都要把**全部权重读一遍**（前向一次）。A100 HBM 带宽 ≈ 2 TB/s
+> （80GB 版；40GB 版为 1.55 TB/s，本课 decode 账统一用 80GB 口径）：
 >
 > ```
 > 每 token 最快 = 14 GB / 2 TB/s = 7 ms/token → 上限约 140 tok/s
 > 算力需求呢? 7B 参数 × 2 FLOP × 1 token = 14 GFLOP
-> A100 算力 312 TFLOPS(fp16) → 只需 0.045 ms
+> A100 算力 312 TFLOPS(fp16 Tensor Core) → 只需 0.045 ms
 > ```
 >
 > 比值：带宽时间 7ms vs 算力时间 0.045ms——**155 倍的带宽瓶颈**。
 > 这就是 roofline 的直接应用：decode 的算术强度 ≈ 1 FLOP/2B，
-> 远低于 A100 的拐点（~156 FLOP/B）。**decode 的全部优化，
+> 远低于 A100 的拐点（fp16 Tensor Core 口径 ≈ 312/2.0 ≈ 156 FLOP/B；
+> 注意与 fp32 口径的 12.6 不同——拐点跟着"用哪个算力单元"走）。**decode 的全部优化，
 > 都是围绕"怎么少读、快读"展开的**——量化、KV 压缩、
 > speculative decoding 都是这条逻辑的分支。
 
@@ -115,14 +117,14 @@ PagedAttention 把 KV cache 切成**固定大小的页（如 16 token/页）**�
 ```
 Q×Kᵀ → S (N×N 得分矩阵) → softmax → ×V → 输出
          ↑ 这个 N×N 矩阵要写进显存再读回来!
-序列 8K: N×N = 64M 元素 × 2B = 128 MB 的中间张量
+序列 8K: N×N = 64M 元素 × 2B = 134 MB(128 MiB) 的中间张量
 ```
 
 N×N 矩阵是**纯中间结果**——算完 softmax 就没用了，却要付两次
 显存往返（写 + 读）。手算它的代价（A100，N=8192）：
 
 ```
-写 128MB + 读 128MB = 256 MB / 2 TB/s ≈ 0.13 ms
+写 134MB + 读 134MB = 268 MB / 2 TB/s ≈ 0.13 ms
 这还只是 softmax 一次; 再乘 V 又一轮 → attention 的时间
 大头不是乘法是搬运 → memory-bound, 又是 roofline 的形状
 ```
@@ -203,7 +205,7 @@ allreduce 的带宽模型长什么样。
 
 完成以下四项才算通过本课（每题都能在纸上或 `python -m course.runner 31` 里验证）：
 
-1. 手算：13B 模型 fp16（26 GB）在 1.55 TB/s 带宽卡上的 decode 上限（tok/s），并说清这个上限是带宽墙还是算力墙；
+1. 手算：13B 模型 fp16（26 GB）在 1.55 TB/s 带宽卡（A100 40GB 版）上的 decode 上限（tok/s），并说清这个上限是带宽墙还是算力墙；
 2. 手算：7B 模型（L=32, d=4096）fp16、batch=4、序列 2048 的 KV cache 大小，判断它是否超过权重本身；
 3. 给 naive attention 的 8K 序列算中间矩阵字节数，并用一句话说明 FlashAttention 把它怎么处理掉的；
 4. 用"算力/带宽/显存"三张账各写一句：为什么 continuous batching 能提升吞吐、为什么它不改变单 token 的 TPOT 下限。

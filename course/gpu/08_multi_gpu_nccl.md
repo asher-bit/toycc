@@ -91,7 +91,7 @@ ncclAllReduce(sendbuf, recvbuf, count, ncclFloat,  // 规约
 
 ```text
 HBM(卡内显存)   ≈ 3 TB/s       ← 计算侧
-NVLink(卡间)    ≈ 900 GB/s     ← 节点内通信, 比 HBM 低 ~3 倍
+NVLink(卡间)    ≈ 900 GB/s     ← 节点内通信, 比 HBM(3.35 TB/s) 低 3~4 倍
 InfiniBand(跨机) ≈ 50 GB/s     ← 跨节点通信, 比 NVLink 再低 ~18 倍
 ```
 

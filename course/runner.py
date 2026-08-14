@@ -450,7 +450,7 @@ def lesson19():
 
     # 手算2: A100 roofline 拐点
     knee = 19.5e12 / 1.55e12
-    print(f"  A100 拐点 = 19.5 TFLOPS / 1.55 TB/s ≈ {knee:.1f} FLOP/B")
+    print(f"  A100 拐点 = 19.5 TFLOPS / 1.55 TB/s ≈ {knee:.1f} FLOP/B (fp32, 40GB 版)")
 
     # 手算3: 两个 kernel 各在哪一侧
     vadd = 1 / 12
@@ -745,7 +745,7 @@ def lesson35():
 def lesson31():
     print("=== 第31课:LLM推理性能工程 ===")
     # 手算1: decode 上限
-    w_gb, bw = 14.0, 2.0                           # 7B fp16 权重(GB), 2TB/s = 2GB/ms
+    w_gb, bw = 14.0, 2.0                           # 7B fp16 权重(GB), 2TB/s = 2GB/ms (A100 80GB 版)
     ms = w_gb / bw                                # GB / (GB/ms) = ms
     tok = 1000 / ms
     print(f"  decode: {w_gb}GB / {bw}TB/s = {ms:.1f} ms/token → 上限 ~{tok:.0f} tok/s")
