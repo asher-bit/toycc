@@ -42,14 +42,14 @@
 
 ## 现在最值得继续补的章节
 
-GPU 工具链专题已经把第一批缺口落成章节；后续应继续把这些章节扩展为可运行实验和真实源码精读：
+GPU 工具链专题（CUDA/PTX/ISA/CUTLASS/Triton/Runtime/Nsight/NCCL/端到端）已经全部落章，每章含代码片段、命令和练习。当前最大的缺口是把"导读 + 命令"升级为"一键可跑的实验"，以及覆盖几个尚未成章的空白域：
 
-1. 为 CUDA/PTX 章节加入真实 `.cu` 和 PTX 实验；
-2. 为 CUTLASS/Triton 章节加入可复现的 GEMM 对比；
-3. 为 Runtime/Driver 章节加入最小 module loader 和 stream/event 样例；
-4. 为 Nsight 章节加入真实报告截图、指标解释和性能回归脚本；
-5. 为 NCCL 章节加入 2 GPU/多 GPU collective 和通信重叠实验；
-6. 把端到端案例接到 TVM/MLIR 的真实 lowering pipeline。
+1. 给 GPU 专题配一个 `experiments/` 目录：每章一个可运行的 `.cu`/`.py` 实验（vector_add、tile GEMM、Triton vs CUTLASS 对比、最小 module loader、2 GPU NCCL）；
+2. 为 Nsight 章节加入一份真实 profiling 报告样板，附指标解释和性能回归脚本；
+3. 补充 cuBLAS/cuDNN 库边界专题（workspace、layout、stream 语义、算法选择）；
+4. 补齐 CUDA 进阶缺口：nvrtc、内联 PTX、relocatable device code、CUDA Graphs、设备端运行时；
+5. 把端到端案例（GPU 专题 09）接到 TVM/MLIR 的真实 lowering pipeline；
+6. 把主教材后半段（第 31~35 课）的手算账本升级为可运行实验。
 
 ## 每个新专题必须采用的章节模板
 

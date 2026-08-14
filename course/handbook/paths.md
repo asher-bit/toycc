@@ -54,7 +54,7 @@ GPU 微架构
 - 比较 CUDA、Triton、CUTLASS 实现同一个 GEMM 的抽象边界；
 - 用 profiler 证明瓶颈是计算、访存、同步、发散还是 launch overhead。
 
-主要材料：第 15、19、21~23 课。后续必须补充 CUDA、CUTLASS、Triton 专题。
+主要材料：第 15、19、21~23 课，以及 [GPU 专题](../gpu/README.md) 的 CUDA、PTX、CUTLASS、Triton、Nsight 章节。
 
 ## 路径 C：后端与自研芯片工具链
 
@@ -76,7 +76,7 @@ ISA / ABI / 寄存器文件
 - 从 LLVM IR 追到目标汇编和目标文件重定位；
 - 定义自研 GPU 的编译器、汇编器、运行时和调试器边界。
 
-主要材料：第 22、24~26 课，LLVM/MLIR 专题。后续必须补充 PTX/SASS、ABI、链接和设备 ISA 专题。
+主要材料：第 22、24~26、29 课，LLVM/MLIR 专题，以及 [GPU 专题](../gpu/README.md) 的 CUDA 工具链与 PTX（02）、GPU ISA/寄存器/ABI（03）章节。
 
 ## 路径 D：Runtime、驱动与系统软件
 
@@ -98,7 +98,7 @@ Host API
 - 设计 stream/event、异步拷贝、内存池和错误传播；
 - 给一个新后端接入 runtime，并写端到端测试。
 
-主要材料：第 2、7、16、17、24 课。后续必须补充 CUDA Driver API、设备运行时、NCCL 和多 GPU。
+主要材料：第 2、7、16、17、24、29、30 课，以及 [GPU 专题](../gpu/README.md) 的 Runtime/Driver、NCCL 与多 GPU 章节。
 
 ## 30/60/90 天交付目标
 
