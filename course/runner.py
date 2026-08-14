@@ -280,23 +280,20 @@ PATTERN_OF = {
 
 def lesson13():
     print("=== 第13课:meta_schedule 与 autotuning ===")
-    import random
-    rng = random.Random(42)
     # 搜索空间: 4 个候选调度(分块, 线程)
     space = [(16, 128), (32, 128), (32, 256), (64, 256)]
     # "真机"耗时表: Runner 实测的结果(这里模拟)
     true_time = {(16, 128): 1.8, (32, 128): 1.2, (32, 256): 1.5, (64, 256): 2.4}
 
-    # tune 主循环: 采样 → 测量 → 记 Database → 指导下一轮
+    # tune 主循环: 每轮测 2 个新候选 → 记 Database → 用已有数据指导下一轮
     db = {}
     for rnd in range(2):
-        for c in rng.sample(space, 2):        # 每轮采样 2 个候选
-            if c not in db:
-                db[c] = true_time[c]          # 真实世界 = Runner 上机实测
+        for c in space[rnd * 2: rnd * 2 + 2]:   # 每轮测 2 个没测过的候选
+            db[c] = true_time[c]                # 真实世界 = Runner 上机实测
         best = min(db, key=db.get)
         print(f"  轮{rnd+1}: 已测 {sorted(db.keys())} 当前最优 {best} = {db[best]} ms")
     print(f"  Database 共 {len(db)} 条记录; 最终最优配置 = {best} ({db[best]} ms)")
-    assert best == (32, 128)
+    assert best == (32, 128) and len(db) == 4
 
     # 四个组件的分工
     for comp, job in (("SearchSpace", "所有合法调度的集合"),
