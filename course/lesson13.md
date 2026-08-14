@@ -307,6 +307,17 @@ A：图 pass（Relax 层）决定算什么、怎么排布；meta_schedule 在 TI
 
 ---
 
+## 本课检查点
+
+完成以下四项才算通过本课：
+
+1. 默写 meta_schedule 四个组件（SearchSpace / CostModel / Runner / Database），各用一句话说它管什么；
+2. 写出 autotune 主循环的五步（采样 → 编译 → 实测 → 训练模型 → 指导下一轮），并标出哪一步最耗时间；
+3. 用一句话解释"为什么换硬件就要重新 tune"——什么变了导致旧数据库失效；
+4. 说清 cost model 与 runner 的分工：为什么"预测"和"实测"必须分开两个组件。
+
+---
+
 ## 扩展阅读：autotune 的三个“为什么”
 
 ### A. 为什么搜索空间不能随便"全展开"？

@@ -317,6 +317,17 @@ benchmark 方法论，以及 conv/GEMM 怎么真正变快（im2col / Winograd / 
 
 ---
 
+## 本课检查点
+
+完成以下四项才算通过本课（每题都能用 `python -m course.runner 18` 验证）：
+
+1. 写出对称量化的 scale 公式（`scale = max|x| / 127`），并手算一个 `[-3.5, 3.5]` 张量的 scale 与量化误差上限；
+2. 用 runner 18 的输出解释：为什么 per-channel 优于 per-tensor、int4 误差为什么大 10 倍（各一句）；
+3. 说清 PTQ 与 QAT 的分工（谁需要训练、谁只要校准集），各举一个适用场景；
+4. 手算：fp16 相比 fp32、int8 相比 fp32 各省多少字节（相对值），并说明"省字节"在带宽受限场景为什么直接等于省时间。
+
+---
+
 ## 扩展阅读：量化里的三个常见坑
 
 ### A. 为什么 per-channel 比 per-tensor 准得多？

@@ -250,6 +250,17 @@ runtime / assembler / profiler / debugger 这些组件拼成一张完整的图�
 
 ---
 
+## 本课检查点
+
+完成以下四项才算通过本课（每题都能用 `python -m course.runner 23` 验证）：
+
+1. 默写 kernel 开发的日常工作循环（写 → benchmark → profiler 找瓶颈 → 改 → 再测），并说出"一次只改一个变量"为什么是铁律；
+2. 用 roofline 判断：vector_add（0.08 FLOP/B）和 matmul 32×32（5.33 FLOP/B）各该往哪个方向优化，各写一句；
+3. 解释"健康度 = 实测带宽 / 理论带宽"为什么比 wall time 更有归因能力；
+4. 把 profiler 的四个指标（occupancy / 合并访问 / 发散 / stall）各对应到一条具体的代码修改动作。
+
+---
+
 ## 扩展阅读：性能调优的三个经验
 
 ### A. "改一处，测一处"的铁律

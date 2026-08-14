@@ -436,4 +436,15 @@ A：TableGen 是 LLVM/MLIR 的**声明式描述语言**——用表格描述指�
 
 ---
 
+## 本课检查点
+
+完成以下四项才算通过本课（每题都能用 `python -m course.runner 14` 对照）：
+
+1. 把五种 IR（Relax / TIR / MLIR / LLVM IR / PTX）各用一句话说清"它表达哪一层、对象是什么"；
+2. 回答：一个三重循环在 Relax 里不存在、在 TIR 里是显式对象、在 LLVM IR 里变成什么（基本块 + phi + 分支）；
+3. 说清 MLIR 与 LLVM IR 的本质差别（可扩展方言 vs 固定指令集），各举一个对象；
+4. 按"模型 → PTX"排一条下降链，标出每跳发生在哪两个 IR 之间。
+
+---
+
 **导航**：⬅ [上一节](lesson13.md)（第 13 课 · meta_schedule 与自动调度）　｜　[下一节](lesson15.md)（第 15 课 · 硬件必修课）➡

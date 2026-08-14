@@ -453,6 +453,17 @@ A：官方教程 `tutorials/language/schedule_primitives.py`（中文站有翻�
 
 ---
 
+## 本课检查点
+
+完成以下四项才算通过本课（每题都能用 `python -m course.runner 11` 验证）：
+
+1. 手算：对 8×8 的 `(i, j, k)` 三重循环做 `tile(i, j, 4, 4)`，写出 tile 后外层 `(i_o, j_o)` 与内层 `(i_i, j_i)` 的取值范围；
+2. 用一句话解释为什么 tile / reorder / vectorize / parallel 都"语义等价"——变的是什么、不变的是什么；
+3. 解释 `reorder(k 外提)` 的复用账：k 提到最外层后，每个小块复用了 A 的什么、B 的什么；
+4. 说出 `vectorize(j_i)` 成立的前提条件（j_i 的访存是否连续、边界是否整除 4）。
+
+---
+
 ## 扩展阅读：调度的三个进阶细节
 
 ### A. 为什么 reorder 和 tile 经常要一起做？

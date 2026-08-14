@@ -323,6 +323,17 @@ A：编译器自带运行时（TVM 的 `src/runtime/`），编译产物要链接
 
 ---
 
+## 本课检查点
+
+完成以下四项才算通过本课（每题都能用 `python -m course.runner 17` 验证）：
+
+1. 写出 ONNX 模型的四个要素（input / initializer / node / output），并说清"权重是 initializer 而不是 input"对常量折叠意味着什么；
+2. 把 LayerNorm 拆成原始算子链（mean/sub/pow/mean/add/sqrt/div/mul/add），写出其中每个算子的输入；
+3. 解释符号形状（`(1, C, H, W)`）与静态形状在编译上的差别：哪些优化能做、哪些不能做；
+4. 用一句话回答"LLM 推理为什么把图从 DAG 变成 CFG"（while 循环 = 每步生成一个 token 的循环）。
+
+---
+
 ## 扩展阅读：前端的三个常见坑
 
 ### A. 为什么 ONNX 转换经常"差一点点"？
