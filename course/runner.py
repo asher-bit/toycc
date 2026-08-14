@@ -280,54 +280,56 @@ PATTERN_OF = {
 
 def lesson13():
     print("=== 第13课:meta_schedule 与 autotuning ===")
-    print("""
-本机没装 tvm,这节课是概念 + 流程 + 可运行骨架(装好 tvm 后执行)。
+    import random
+    rng = random.Random(42)
+    # 搜索空间: 4 个候选调度(分块, 线程)
+    space = [(16, 128), (32, 128), (32, 256), (64, 256)]
+    # "真机"耗时表: Runner 实测的结果(这里模拟)
+    true_time = {(16, 128): 1.8, (32, 128): 1.2, (32, 256): 1.5, (64, 256): 2.4}
 
-核心循环(autotune 的本质):
-  for 轮次:
-    1. 从搜索空间采样一组调度(分块/向量化/线程参数)
-    2. 编译成可执行代码
-    3. 在目标硬件上实测耗时(测量)
-    4. 用结果训练成本模型(预测"没测过的调度"快不快)
-    5. 下一轮采样时避开慢的, 聚焦快的
+    # tune 主循环: 采样 → 测量 → 记 Database → 指导下一轮
+    db = {}
+    for rnd in range(2):
+        for c in rng.sample(space, 2):        # 每轮采样 2 个候选
+            if c not in db:
+                db[c] = true_time[c]          # 真实世界 = Runner 上机实测
+        best = min(db, key=db.get)
+        print(f"  轮{rnd+1}: 已测 {sorted(db.keys())} 当前最优 {best} = {db[best]} ms")
+    print(f"  Database 共 {len(db)} 条记录; 最终最优配置 = {best} ({db[best]} ms)")
+    assert best == (32, 128)
 
-四个组件:
-  SearchSpace    所有合法调度的集合(参数组合)
-  CostModel      预测某个调度有多快(用已测结果学习)
-  Runner         在真机上测量耗时的执行器
-  Database       存"调度 → 耗时"记录, 供复现/导出
-
-为什么需要 autotune:
-  调度参数空间巨大(分块大小/向量宽度/线程数...),
-  手写既难又容易过时(换硬件就失效)。
-
-装好 tvm 后跑(骨架, 参考官方 meta_schedule 教程):
-    from tvm import meta_schedule as ms
-    # 1. 建工作负载(一个 matmul 的 te 或 TIR 函数)
-    # 2. 定义 search space: ms.SearchGenerator(...)
-    # 3. 定义 runner: ms.runner.LocalRunner(...)
-    # 4. tune:  generate -> measure -> evolve 多轮
-    # 5. 把最好调度 export 成 schedule, 固化到代码里
-    # 完整可运行例子见 course/lesson13.md
-""")
+    # 四个组件的分工
+    for comp, job in (("SearchSpace", "所有合法调度的集合"),
+                      ("Runner", "真机实测耗时"),
+                      ("CostModel", "预测未测调度的快慢"),
+                      ("Database", "存 调度→耗时, 供复现/导出")):
+        print(f"  {comp:<12} → {job}")
+    print("  观察: autotune = 采样×测量×学习的循环; 换硬件 = 换 true_time 表, 必须重搜。")
 
 
 def lesson14():
     print("=== 第14课:IR 家族(LLVM/MLIR/TIR/PTX) ===")
-    print("""
-五种 IR 的层级关系:
-  模型(ONNX/PyTorch) → Relax(图) → TIR(循环) → LLVM IR(标量) → PTX(GPU汇编)
-每层回答: 算什么(高层) → 怎么算(低层)
+    # 五层 IR: 各表达什么 + 对应对象
+    layers = [
+        ("Relax", "张量图 + 动态形状", "toycc 的 Graph"),
+        ("TIR", "循环 + 计算块 + buffer", "toycc 的 LoopNest/schedule"),
+        ("MLIR", "可扩展多层, 方言机制", "Operation/Region/Block"),
+        ("LLVM IR", "SSA + 虚拟寄存器, 强类型", "BasicBlock + phi"),
+        ("PTX", "GPU 虚拟汇编", "地址空间 + 线程 + fma"),
+    ]
+    for name, what, obj in layers:
+        print(f"  {name:<8} → {what}; 对应对象: {obj}")
+    assert len(layers) == 5
 
-速记:
-  Relax  : 张量图, 动态形状         =  toycc 的 Graph
-  TIR    : 循环 + 计算块 + buffer   =  toycc 的 LoopNest
-  MLIR   : 可扩展多层, 方言机制
-  LLVM IR: SSA + 虚拟寄存器, 强类型
-  PTX    : GPU 汇编, 地址空间 + 线程 + fma
+    # 下降链: 每层从"算什么"走向"怎么算"
+    chain = ["Relax(算什么)", "TIR(怎么循环)", "LLVM IR(标量指令)", "PTX(哪条 GPU 指令)"]
+    print("  下降链: " + " → ".join(chain))
+    assert len(chain) == 4
 
-完整示例(官方权威)见 course/lesson14.md。
-""")
+    # 两个结构问题的答案
+    print("  循环是显式对象的层: TIR(For 节点) / MLIR(scf.for + iter_args)")
+    print("  合流的两种写法: LLVM phi(按前驱边选值) vs MLIR block argument(入口取值)")
+    print("  观察: 五层 IR 共享 SSA 与"层次越低越具体"的下降逻辑。")
 
 
 def lesson10():
