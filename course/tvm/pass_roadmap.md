@@ -369,3 +369,21 @@ Fusion Pass 合并计算边界
 FuseTIR 把 Relax 计算变成 TIR 实现
 Codegen Pass 把实现交给目标后端
 ```
+
+## 常见错误与归因
+
+| 现象 | 根因 | 定位手段 |
+|---|---|---|
+| 自写 pass 放进 pipeline 就错 | pass 顺序错了（如 Fusion 前没 AnnotateTIROpPattern） | 对照本文的标准顺序逐位排查 |
+| 观察不到 pass 效果 | 没在关键节点 dump IR | 每步之后打印 mod，比较 binding 变化 |
+| 混淆分析 pass 与重写 pass | 把"读取事实"当"修改 IR" | 按"输入输出"判断：分析不改图、重写改图 |
+| 跑通 pipeline 但结果错 | 中间某 pass 语义不合法 | 逐 pass 差分对比数值结果 |
+
+## 本章检查点
+
+完成以下四项才算通过本章：
+
+1. 默写标准 pipeline 顺序（AnnotateTIROpPattern → FuseOps → FuseTIR → FoldConstant → LegalizeOps），并说出每一环"为什么必须在下一环之前"；
+2. 把 toycc 的 `run_passes(g, ("fusion", "layout", "constfold"))` 与本文 pipeline 逐项对照，列出语义对应的三项与 toycc 没有的一项；
+3. 在真实 TVM 上跑一遍本文的观察清单（legalize 前后算子、FoldConstant 减 binding、DCE 删变量），记录每步的 IR 行数变化；
+4. 用一句话回答"为什么读 pass 要先读 pipeline 而不是先读单个 pass 源码"。

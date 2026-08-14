@@ -844,3 +844,21 @@ relax.transform.FuseOpsByPattern
 6. `FuseTIR` 相关实现
 
 其中，`graph_partitioner.cc` 负责实现 `CheckPath`、`CommitFuse`、post-dominator tree 和具体的融合阶段；`fuse_ops.cc` 则负责把分组结果重新生成 Relax 函数并改写原始 IR。
+
+## 16. 常见错误与归因
+
+| 现象 | 根因 | 定位手段 |
+|---|---|---|
+| 融合后数值结果变了 | 把有顺序依赖的算子并进一组（如 relu 与 bias 顺序颠倒） | 逐条核对融合规则与"唯一消费者"前提 |
+| 分组结果依赖未更新 | 分组后没有按依赖顺序重写 binding | 检查 `CommitFuse` 后的 rewire 与 `Emit` 顺序 |
+| 该融合的没融合 | pattern 表漏了算子组合，或 `CheckPath` 被保守条件拦住 | 打印 pattern 匹配与路径检查结果 |
+| 融合组过大导致代码膨胀 | 分组条件太松，把无关算子吸进一组 | 看生成函数体积与调用次数 |
+
+## 17. 本章检查点
+
+完成以下四项才算通过本章：
+
+1. 手算：对 `conv → bias_add → relu` 链，说明"唯一消费者"条件在哪一步被检查，以及多消费者时为什么必须拒绝融合；
+2. 用一句话解释 post-dominator tree 在分组中的作用，并指出它与 toycc 里 `consumers()` 的对应关系；
+3. 打开 `graph_partitioner.cc` 的 `CheckPath`，说出它检查哪几个条件、分别防什么错；
+4. 对照 toycc 的 `FusionPass` 列出三处真实 FuseOps 有而 toycc 没有的设计（如后支配分析、模式分组、代价模型），并各写一句"为什么工业实现需要它"。

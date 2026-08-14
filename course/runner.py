@@ -15,6 +15,10 @@ import sys
 
 import numpy as np
 
+# Windows 控制台默认 GBK: 强制 UTF-8 输出, 避免特殊字符(³/Δ 等)编码崩溃
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 sys.path.insert(0, ".")
 from toycc.examples.model import build_model, default_weights  # noqa: E402
 
@@ -411,146 +415,211 @@ def lesson18():
 
 def lesson17():
     print("=== 第17课:模型怎么进编译器(前端/下降/动态形状/运行时) ===")
-    print("""
-链条: 模型 → 前端导入 → 图优化 → legalize(下降) → TIR → codegen → 运行时
-关键点:
-  ONNX   : input / initializer(权重) / node / output / opset
-  legalize: LayerNorm → mean/var/逐元素 的组合
-  动态形状: T.Var 符号形状 → 形状特化 / 动态分派
-  控制流 : if/while → 图从 DAG 变成 CFG (LLM 推理= while 循环)
-  运行时 : VirtualMachine 解释指令序列, 管内存/设备/参数绑定
-完整内容见 course/lesson17.md。
-""")
+    from toycc.ir import Graph
+    # 实验1: ONNX 风格导入 —— node 列表 → 计算图
+    g = Graph("imported")
+    g.add_input("x")
+    g.add_op("relu", ["x"], "r1")
+    g.add_op("sigmoid", ["r1"], "out")
+    g.mark_output("out")
+    print("-- ONNX 风格 node 列表(名字, 算子, 输入) → toycc 计算图 --")
+    print(g.dump())
+
+    # 实验2: legalize 下降 —— LayerNorm 拆成原始算子链
+    steps = ["mean(x)", "sub(x, mean)", "pow(diff, 2)", "mean(pow2)",
+             "add(var, eps)", "sqrt", "div(diff, std)", "mul(norm, gamma)",
+             "add(scaled, beta)"]
+    print(f"-- legalize: LayerNorm(1 个高层算子) → {len(steps)} 个原始算子 --")
+    for s in steps:
+        print(f"  {s}")
+    assert len(steps) == 9
+
+    # 实验3: 动态形状 = 符号变量
+    print("-- 符号形状: (1, 'batch', 'seq', 4096) 编译期保留符号, 运行时绑定 --")
+    print("  观察: 前端导入=名字表翻译; legalize=高层算子分解; 符号形状=编译期不展开。")
 
 
 def lesson19():
     print("=== 第19课:性能度量与算子加速 ===")
-    print("""
-Roofline: 性能上限 = min(算力墙, 带宽墙 × 计算强度)
-  计算强度 = 总FLOP / 总搬运字节
-  低强度→带宽受限(优化搬运); 高强度→算力受限(优化计算)
+    # 手算1: matmul 32³ 的算术强度
+    m = n = k = 32
+    flop = 2 * m * n * k
+    byte = 3 * m * n * 4                     # A、B 读 + C 读写(无复用近似)
+    ai = flop / byte
+    print(f"  matmul 32x32x32: {flop} FLOP / {byte} B = {ai:.2f} FLOP/B (≈5.3)")
+    assert abs(ai - 5.33) < 0.05
 
-Benchmark 方法论: warmup → 测N次取中位数 → 注明测的是什么
+    # 手算2: A100 roofline 拐点
+    knee = 19.5e12 / 1.55e12
+    print(f"  A100 拐点 = 19.5 TFLOPS / 1.55 TB/s ≈ {knee:.1f} FLOP/B")
 
-算子加速:
-  im2col   : conv → GEMM(重复拷贝换复用优化)
-  Winograd : 小卷积(3x3) 加法换乘法, 省 50%+ 乘法
-  GEMM微内核: 分块 + 寄存器累加(6x8) + 向量化
+    # 手算3: 两个 kernel 各在哪一侧
+    vadd = 1 / 12
+    print(f"  vector_add {vadd:.3f} FLOP/B << 拐点 → 带宽受限; matmul 接近拐点侧 → 有算力空间")
+    assert vadd * 100 < knee
 
-手算例子: 32x32 matmul 强度≈5.3 FLOP/Byte → 通常带宽受限
-完整内容见 course/lesson19.md。
-""")
+    # 手算4: im2col 膨胀与 Winograd 乘法账
+    print(f"  im2col: 每个输入像素被复制 {3*3} 份(3×3 卷积核) → 内存膨胀换 GEMM 复用")
+    wino = 36 / 16
+    print(f"  Winograd F(2×2,3×3): 36 次乘法 → 16 次 = {wino:.2f} 倍(加法换乘法)")
+    assert abs(wino - 2.25) < 1e-9
+
+    # 手算5: benchmark 为什么用 median
+    import statistics
+    samples = [100, 101, 99, 102, 98, 1000]  # 混入一次偶发抖动
+    print(f"  抖动样本 {samples}: mean={statistics.mean(samples):.0f}"
+          f" vs median={statistics.median(samples):.0f} → median 不被拉偏")
 
 
 def lesson21():
     print("=== 第21课:GPU 芯片架构 ===")
     from toycc.hardware import LATENCY
-    print("GPU = 大量小核的并行机器(SIMT), warp=32线程锁步执行")
-    print("\nSM 是资源单位:")
-    print("  寄存器文件 ~256KB / 共享内存 ~100KB / warp 上限 64")
-    print("\n内存层次(延迟):")
+    # 手算1: 寄存器文件
+    regs = 65536 * 4
+    print(f"  寄存器文件 = 65536 寄存器 × 4B = {regs//1024} KB")
+    assert regs == 256 * 1024
+    # 手算2: 满 occupancy 的每线程寄存器
+    print(f"  2048 线程满占时每线程 = {65536 // 2048} 个寄存器")
+
+    # 手算3: 一个 GEMM 的 occupancy 账
+    for rpt in (64, 128):
+        blocks = 65536 // (rpt * 256)
+        occ = min(blocks * 8, 64) / 64
+        print(f"  256线程/块 × {rpt:3d} 寄存器/线程 → {blocks} blocks → occupancy {occ:.0%}")
+    assert 65536 // (128 * 256) == 2
+
+    # 手算4: 合并访问的事务账
+    print(f"  warp 连续读 float: 32×4B = 128B = 1 条 cache line(4 个 32B sector)")
+    print(f"  warp stride 读:     每线程各落 1 条 line → 32 笔事务, 有效利用 12.5%")
+
+    # 手算5: 分支发散
+    print(f"  if/else 对半发散: 2 条指令干 32 线程的活 → 该段利用率 50%")
+
+    print("  内存层次(延迟, 近似):")
     for k, v in LATENCY.items():
         print(f"  {k:<10} {v} 周期")
-    print("""
-三个 GPU 编译器的核心矛盾:
-  1. 合并访问(coalescing)  → 省带宽
-  2. 占用率(occupancy)     → 隐藏延迟
-  3. 资源限制(寄存器/共享内存) → 不能溢出
-  这三者互相矛盾, 编译器就是在它们之间做平衡。
-详细见 course/lesson21.md
-""")
+    print("  观察: 三个核心矛盾 —— 合并访问/占用率/资源限制, 编译器在其中做平衡。")
 
 
 def lesson22():
     print("=== 第22课:GPU 编译器特有技术 ===")
+    # 手算1: 谓词化 —— 发散分支 → 带开关的指令
     print("""
-给 GPU 编译 ≠ 给 CPU 编译, 多了:
-  SIMT 语义   : 32线程锁步, 编译器保证一致
-  海量线程    : 线程/块/共享内存/寄存器 编译期分配
-  显式内存分层: 共享内存要手动搬
-  指令调度    : GPU 无乱序引擎, 顺序决定性能
-  PTX→SASS    : 虚拟汇编 → 真实机器码两层
-
-  predication : 把分支变成带开关的指令, 避免发散
-  占用率计算  : 编译期算出 SM 能放几个 warp
-详细见 course/lesson22.md
-""")
+  发散版(两条路径串行, 各 50% 活跃):
+    if (tid & 1) x = a + b; else x = a * b;
+  谓词化(两条指令各带谓词, 无跳转):
+    @p0  FADD x, a, b     ← 谓词为真的 lane 执行
+    @!p0 FMUL x, a, b     ← 其余 lane 执行
+  """)
+    # 手算2: 指令调度 —— 依赖链 vs 独立链
+    dep = 3 * 4                              # 3 条串行 FMA × 4 周期延迟
+    ind = 4
+    print(f"  依赖链: 3 条串行 FMA × 4 周期 = {dep} 周期(全部干等)")
+    print(f"  独立链: 4 条互不依赖的 FMA 互相填等待 ≈ {ind} 周期 → 调度重排的价值")
+    # 手算3: PTX → SASS 两层
+    print("""
+  PTX(虚拟 ISA) → ptxas(寄存器分配 + 指令调度) → SASS(真实机器码)
+  虚拟寄存器 %r0..%rN → 物理寄存器 R0..R255; 两条链的指令数通常不等
+  """)
+    # 手算4: occupancy 直读
+    for warps in (16, 32, 64):
+        print(f"  {warps:2d} warps/SM → occupancy {warps/64:.0%} (上限 64)")
+    print("  观察: 编译器的四个独有矛盾 —— SIMT 锁步 / 编译期资源分配 / 显式分层 / 顺序调度。")
 
 
 def lesson23():
     print("=== 第23课:Kernel 开发与性能分析 ===")
-    print("""
-日常工作循环:
-  写 kernel → benchmark → profiler 找瓶颈 → 优化 → 再测
+    # 手算1: roofline 判断值不值得优化
+    vadd, knee = 1 / 12, 19.5e12 / 1.55e12
+    mm = 2 * 32**3 / (3 * 32 * 32 * 4)
+    print(f"  vector_add {vadd:.3f} FLOP/B vs 拐点 {knee:.1f} → 带宽顶死, 优化搬运")
+    print(f"  matmul 32x32x32 {mm:.2f} FLOP/B → 有优化空间, 优化复用与算力")
 
-roofline 判断值不值得优化:
-  vector_add 强度≈0.08 → 带宽顶死(不用优化算)
-  matmul     强度≈5.3  → 有优化空间
+    # 手算2: 健康度 = 实测带宽 / 理论带宽
+    measured, theory = 0.6e12, 1.55e12
+    print(f"  实测 0.6 TB/s / 理论 1.55 TB/s = 健康度 {measured/theory:.0%}"
+          f" → 事务数手算是排查第一页")
+    assert abs(measured / theory - 0.39) < 0.05
 
-benchmark 方法论: warmup + 中位数 + 同步 + 同条件
-profiler 输出指标: 占用率/合并访问/发散/指令 stall
-最优 kernel → 固化成 TIR 模板 / autotune 搜索空间
-详细见 course/lesson23.md
-""")
+    # 手算3: 日常工作循环
+    print("  循环: 写 kernel → benchmark(warmup + median) → profiler 找瓶颈"
+          " → 一次只改一个变量 → 再测")
+
+    # 手算4: 最优 kernel 固化
+    print("  固化: 最优配置 → TIR 模板 / autotune 搜索空间 → 换硬件时重搜")
 
 
 def lesson24():
     print("=== 第24课:自研 GPU 工具链全景 ===")
-    print("""
-工具链组件:
-  编译器 + 汇编器 + 链接器 + 驱动 + 运行时 + profiler + 调试器
+    # 实验: 给 TVM 加新后端的五步 —— 每步的可检查产物
+    steps = [
+        ("1. target 描述", "芯片硬件特性表(target 字符串 + 参数)"),
+        ("2. codegen", "TIR → 目标指令(relax.ext.<target>)"),
+        ("3. runtime 驱动", "VM 在芯片上跑通最小算子(端到端)"),
+        ("4. meta_schedule", "搜索空间 + Runner 指向模拟器"),
+        ("5. 测试 + CI", "差分测试 + 覆盖率门禁"),
+    ]
+    for name, artifact in steps:
+        print(f"  {name:<18} → 产物: {artifact}")
+    assert len(steps) == 5
 
-给 TVM 加新后端的五步:
-  1. target 描述 (芯片的硬件特性表)
-  2. codegen (TIR → 你的芯片指令, relax.ext.<target>)
-  3. runtime 驱动 (让 VM 能跑你的芯片)
-  4. meta_schedule (搜最优调度)
-  5. 测试 + CI
-
-入职第一周: 跑环境 → 看 target 描述 → 改小地方 → 提 PR
-详细见 course/lesson24.md
-""")
+    # 工具链七件套互相喂
+    chain = ["编译器", "汇编器", "链接器", "驱动", "运行时", "profiler", "调试器"]
+    print(f"  七件套: {' → '.join(chain)}")
+    assert len(chain) == 7
+    print("  观察: 每步都有独立可检查产物 —— 后四步由第 27~30 课逐个展开。")
 
 
 def lesson25():
     print("=== 第25课:LLVM 深入 ===")
+    # 手算1: phi 语义
     print("""
-llvm-project = 一整套基础设施: IR + 优化器 + 后端框架 + MC
+  phi 语义: 沿哪条前驱边进块, 就选哪条边携带的值
+    %v = phi i32 [ %x, %then ], [ %y, %else ]
+    cond=true → %v = %x;  cond=false → %v = %y
+  """)
+    # 手算2: GEP 是纯地址计算
+    base, idx = 0x1000, 3
+    addr = base + idx * 4
+    print(f"  getelementptr i32, ptr base, i64 {idx} → 0x{base:x} + {idx}×4 = 0x{addr:x}"
+          f" (只算地址, 不读内存)")
+    assert addr == 0x100C
 
-LLVM IR 深入:
-  基本块 + phi 节点    控制流(if/while 降到这层)
-  getelementptr(GEP)  纯地址计算, 不读内存
-  属性(attributes)     编译器之间的优化提示
-
-pass 体系: 分析/变换分离 + 新 pass 管理器(PreservedAnalyses 缓存)
-
-后端流水线:
-  指令选择(TableGen) → 指令调度 → 寄存器分配(图着色) → MC 编码
-
-MC 层 = 写汇编器的标准框架:
-  TableGen 描述指令 → 自动生成 汇编器/反汇编器/目标文件
-详细见 course/lesson25.md
-""")
+    # 手算3: 分析失效契约
+    print("""
+  pass 改了 CFG 却谎报 preserve → 后续 pass 用过期的支配树 → 错误优化
+  契约: 改了什么就作废什么; 只读 pass 才能返回 PreservedAnalyses::all()
+  """)
+    # 手算4: 后端流水线
+    print("  指令选择(TableGen 匹配) → 指令调度(填延迟) → 寄存器分配(图着色) → MC 编码")
+    print("  观察: 四个概念各有一个 C++ 对象 —— BasicBlock / DominatorTree / PassManager / MC。")
 
 
 def lesson26():
     print("=== 第26课:MLIR 深入 ===")
+    # 手算1: 下降链每层一句话
+    chain = [("tosa.conv", "算子语义"), ("linalg", "结构化循环"),
+             ("affine/scf", "显式循环/控制流"), ("memref", "内存"),
+             ("llvm", "接近 LLVM IR")]
+    for d, what in chain:
+        print(f"  {d:<12} → {what}")
+    assert len(chain) == 5
+
+    # 手算2: ODS 一行 → 生成四样
     print("""
-MLIR = 可扩展的多层 IR 框架, 一切皆是 Operation
-
-核心概念:
-  方言(dialect)  给每层抽象起名字 (linalg/affine/scf/memref/llvm)
-  region         操作里能装控制流(for/if 是带 region 的操作)
-  ODS/TableGen   声明式定义算子, 自动生成 C++/打印/校验
-  pattern rewrite  优化/下降/合法化三位一体的 pass 写法
-
-渐进式下降链(以 conv 为例):
-  tosa.conv → linalg → affine/scf → memref → llvm 方言 → LLVM IR
-  每跳都是 pattern rewrite, 每步都是合法 MLIR
-
-自研芯片: MLIR 做前端/高层, 后端可接 LLVM(第25课)
-详细见 course/lesson26.md
-""")
+  ODS 一行 def → 生成: 类声明 / 访问器 / parser+printer(assemblyFormat) / verifier 框架
+  """)
+    # 手算3: pattern rewrite 两步
+    print("""
+  pattern: addi(x, 0) → x
+  match: 右操作数是常量 0?  →  failure(不接手) / rewrite(replaceOp 重连 uses)
+  """)
+    # 手算4: bufferization in-place 决策
+    print("""
+  y = add(x, c): x 无其他使用者 → 复用 x 的 buffer(in-place)
+                 x 有其他使用者 → 分配新 buffer(out-of-place, 别名不允许覆盖)
+  """)
+    print("  观察: 方言/region/ODS/rewrite/bufferize —— 五个词各对应一个 IR 对象。")
 
 
 def lesson30():

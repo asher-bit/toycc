@@ -343,6 +343,17 @@ A：接下来会给一份完整的"上岗路线图"：改 toycc → 给 TVM 写�
 
 ---
 
+## 6.5 本课检查点
+
+完成以下四项才算通过本课：
+
+1. 默写本课的 `Sequential` pipeline 顺序（AnnotateTIROpPattern → FuseOps → FuseTIR → FoldConstant → LegalizeOps），并说出每步之后该观察 IR 的哪一处变化；
+2. 把 `Sequential` 与 toycc 的 `run_passes` 对照：语义对应的两项、真实版多出的能力一项（如依赖管理/调试打印）；
+3. 在装好的 TVM 上跑一遍 `tvm_demo.py`，记录每个 pass 之后 `mod` 的算子数变化（手抄成表）；
+4. 解释 `AnnotateTIROpPattern → FuseTIR` 这一对为什么必须连用（pattern 标注是融合成 PrimFunc 的前置信息）。
+
+---
+
 ## 7. 扩展阅读 A：Pass 基础设施的“三张通行证”
 
 TVM 的 pass 体系有**三种 pass 类型**，对应三种作用范围：
