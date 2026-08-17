@@ -42,13 +42,13 @@
 
 ## 现在最值得继续补的章节
 
-GPU 工具链专题（CUDA/PTX/ISA/CUTLASS/Triton/Runtime/Nsight/NCCL/端到端）已经全部落章并深写，每章含代码片段、命令、常见错误与检查点；主教材 36 课全部配齐 `python -m course.runner XX` 可运行实验与章末检查点。当前剩余缺口：
+GPU 工具链专题已全部落章并深写（含第 10 章 GEMM 优化案例、第 11 章浮点误差、第 12 章版本兼容），并配了 `experiments/` 真机实验目录；主教材 36 课全部配齐 `python -m course.runner XX` 实验与章末检查点；新增 `toyisa/` 迷你教学 ISA 项目（第 27~29 课的动手闭环）。当前剩余缺口：
 
-1. 给 GPU 专题配一个 `experiments/` 目录：每章一个真机可跑的 `.cu`/`.py` 实验（vector_add、tile GEMM、Triton vs CUTLASS 对比、最小 module loader、2 GPU NCCL）；
-2. 为 Nsight 章节加入一份真实 profiling 报告样板，附指标解释和性能回归脚本；
-3. 补充 cuBLAS/cuDNN 库边界专题（workspace、layout、stream 语义、算法选择）；
-4. 补齐 CUDA 进阶缺口：nvrtc、内联 PTX、relocatable device code、CUDA Graphs、设备端运行时；
-5. 把端到端案例（GPU 专题 09）接到 TVM/MLIR 的真实 lowering pipeline。
+1. 给 `experiments/` 目录补一份真实 profiling 报告样板（Nsight 截图 + 逐项指标解释 + 性能回归脚本）；
+2. 补充 cuBLAS/cuDNN 库边界专题（workspace、layout、stream 语义、算法选择）；
+3. 补齐 CUDA 进阶缺口：nvrtc、内联 PTX、relocatable device code、CUDA Graphs、设备端运行时；
+4. 把端到端案例（GPU 专题 09）接到 TVM/MLIR 的真实 lowering pipeline；
+5. LLVM/MLIR 专题补"逐行精读案例"（对照 TVM 专题的 fuse_ops 深度）。
 
 ## 每个新专题必须采用的章节模板
 

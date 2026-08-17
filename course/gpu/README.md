@@ -27,14 +27,22 @@ CUDA C++ / Triton / CUTLASS
 7. [性能分析：从 benchmark 到 Nsight 指标](07_profiling_performance.md)
 8. [多 GPU、NCCL 与通信计算重叠](08_multi_gpu_nccl.md)
 9. [端到端案例：一个算子从模型到 GPU 的完整排查](09_end_to_end.md)
+10. [GEMM 优化案例：30%→85% 的分步证据链](10_gemm_optimization_case.md)
+11. [浮点误差与数值验证：kernel 算得"对"是什么意思](11_float_error.md)
+12. [版本兼容与部署排查清单](12_compat_matrix.md)
+
+## 真机实验
+
+- [`experiments/`](experiments/README.md)：每章一个可运行实验（vector_add 带宽对比 / 工具链产物链 / Triton GEMM / Driver module loader / NCCL / 端到端排查），需要 NVIDIA GPU + CUDA Toolkit。
 
 ## 推荐顺序
 
-- Kernel 开发：01 → 07 → 04/05；
+- Kernel 开发：01 → 07 → 04/05 → 10 → 11；
 - 编译器后端：01 → 02 → 03 → 06；
-- Runtime/驱动：02 → 03 → 06 → 07 → 08；
-- 性能工程：01 → 04 → 07 → 08；
-- 自研 GPU：01 → 03 → 06 → 第 27~30 课 → 09。
+- Runtime/驱动：02 → 03 → 06 → 07 → 08 → 12；
+- 性能工程：01 → 04 → 07 → 08 → 10；
+- 数值正确性：11 → 回到主课第 18、33 课；
+- 自研 GPU：01 → 03 → 06 → 第 27~30 课 → 09 → 12。
 
 ## 版本边界
 

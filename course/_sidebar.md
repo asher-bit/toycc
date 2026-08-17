@@ -97,6 +97,10 @@
 - [性能分析与 Nsight](gpu/07_profiling_performance.md)
 - [NCCL 与多 GPU](gpu/08_multi_gpu_nccl.md)
 - [端到端案例](gpu/09_end_to_end.md)
+- [GEMM 优化案例](gpu/10_gemm_optimization_case.md)
+- [浮点误差与数值验证](gpu/11_float_error.md)
+- [版本兼容与部署排查](gpu/12_compat_matrix.md)
+- [真机实验目录](gpu/experiments/README.md)
 
 **附录 C · CUDA 编程指南**
 
