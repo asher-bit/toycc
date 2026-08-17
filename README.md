@@ -14,6 +14,7 @@ TVM、LLVM、MLIR、CUDA 各是整条工具链中的一层。
 ```bash
 python -m course.runner 1       # 第1课实验
 python -m toycc.examples.demo   # 完整流水线一键演示
+python -m toyisa.demo           # 迷你教学 ISA: 汇编→链接→双ISS→差分→覆盖率门禁
 ```
 
 `demo` 会打印：10 个算子 → 融合/布局/常量折叠 → 6 个算子，内存省 47%，
@@ -30,6 +31,7 @@ toycc/          配套迷你 AI 编译器（动手教具，模仿 TVM 架构）
 ├── runtime/    numpy 参考执行器（正确性裁判）
 ├── schedule.py TIR 调度模拟器
 └── hardware.py 缓存/延迟硬件模型
+toyisa/         迷你教学 ISA（第 27~29 课的动手项目，流片前工具链第一件交付物）
 ```
 
 ## 课程内容

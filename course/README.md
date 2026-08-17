@@ -21,6 +21,7 @@
 │   ├── passes/          ← 优化 pass(融合/布局/常量折叠/内存)
 │   ├── codegen/         ← 代码生成(C 和 Python 双后端)
 │   └── runtime/         ← numpy 参考执行器(正确性的裁判)
+├── toyisa/              ← 迷你教学 ISA(第27~29课动手项目: 汇编器/链接器/双ISS/差分测试)
 ├── course/              ← 本课程
 │   ├── README.md        ← 你正在看的首页
 │   ├── runner.py        ← 每课的实验运行器
