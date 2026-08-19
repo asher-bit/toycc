@@ -28,6 +28,7 @@
 │   ├── lesson00~35.md   ← 三十六课
 │   ├── handbook/         ← 新员工总手册、岗位路径、知识地图
 │   ├── gpu/              ← CUDA/PTX/CUTLASS/Triton/Runtime/Profiler/NCCL 专题
+│   ├── sim/              ← 模拟器专题(性能模型与周期模型的设计)
 │   ├── tvm/              ← 真实 TVM 源码精读专题
 │   ├── llvm/             ← LLVM 源码与实践分章
 │   ├── mlir/             ← MLIR 源码与实践分章

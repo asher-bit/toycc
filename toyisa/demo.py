@@ -96,10 +96,36 @@ def demo_diff():
     assert diff.gate(report), "覆盖率门禁不通过"
 
 
+def demo_cycle():
+    print("\n== 4. 周期模型: 同一程序, ISS 回答对不对, cycle 回答快不快 ==")
+    from toyisa.assembler import assemble
+    from toyisa.cycle import format_report, run_cycle
+    from toyisa.iss import ISS
+    from toyisa.loader import link
+
+    obj = assemble(SUM_PROG)
+    img = link(obj)
+
+    iss = ISS(img.mem, entry=img.entry)
+    iss.run()
+    rep = run_cycle(img.mem, entry=img.entry)
+    print(format_report(rep))
+    print(f"  功能一致性: 周期模型终态 == ISS 终态 → "
+          f"{rep.regs == iss.regs and rep.mem == bytes(iss.mem)}")
+    assert rep.regs == iss.regs and rep.mem == bytes(iss.mem)
+
+    # 对比: 去掉访存延迟后同一程序的周期数(演示"参数化"如何改变结论)
+    rep0 = run_cycle(img.mem, entry=img.entry, mem_latency=1)
+    print(f"  参数化实验: mem_latency 4→1, 周期 {rep.cycles} → {rep0.cycles}"
+          f" (性能模型 = 参数化的产物, 换参数换结论)")
+    print("  对照 lesson27 第 3 节与 sim 专题: 手算 stall 分类与悲观校准。")
+
+
 def main():
     demo_sum()
     demo_exceptions()
     demo_diff()
+    demo_cycle()
     print("\n全部通过 ✓ —— 对照 course/lesson27.md 与 course/lesson29.md 阅读。")
 
 

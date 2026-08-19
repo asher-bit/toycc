@@ -243,3 +243,92 @@ def test_generator_terminates():
         iss.run()                       # 不抛 step-limit 即通过
         rr, rm, steps, halted = run_ref(img.mem, entry=img.entry)
         assert halted and rr == iss.regs
+
+
+# ---------- 8. 周期模型(lesson27 §3 的手算) ----------
+
+from toyisa.cycle import run_cycle   # noqa: E402
+
+
+def _run_cycles(asm_text):
+    img = link(assemble(asm_text))
+    return run_cycle(img.mem, entry=img.entry)
+
+
+def test_cycle_nop_pipeline_fill():
+    # 3 条 nop + halt: 全部背靠背发射 → halt 在 c3, 流水线排空 +4
+    rep = _run_cycles(".text\nstart:\n    nop\n    nop\n    nop\n    halt\n")
+    assert rep.instructions == 4
+    assert rep.cycles == 7                      # 3 + 4
+    assert abs(rep.ipc - 4 / 7) < 1e-9
+    assert rep.stalls == {"data": 0, "mem": 0, "branch": 0}
+
+
+def test_cycle_dependent_add_no_forwarding():
+    # movi(c0, wb4) → add 必须等 r1 就绪: 发射被推到 c4 → 停 3 拍
+    rep = _run_cycles("""
+.text
+start:
+    movi r1, 1
+    add  r1, r1, r1
+    halt
+""")
+    assert rep.issues[0][2] == 0
+    assert rep.issues[1][2] == 4
+    assert rep.stalls["data"] == 3
+    assert rep.cycles == 9                      # halt 在 c5 + 4
+
+
+def test_cycle_load_use_penalty():
+    # movi(c0,wb4) → ld 等 r1: c4, wb=4+3+4=11 → add 等 r2: c11
+    rep = _run_cycles("""
+.text
+start:
+    movi r1, 0
+    ld   r2, 0(r1)
+    add  r3, r2, r2
+    halt
+""")
+    assert rep.issues[1][2] == 4
+    assert rep.issues[2][2] == 11
+    assert rep.stalls["data"] == 3              # movi→ld
+    assert rep.stalls["mem"] == 6               # ld→add: 11-5
+    assert rep.cycles == 16                     # halt 在 c12 + 4
+
+
+def test_cycle_taken_branch_flush():
+    # beq(r1==r2==0, 跳转) → 冲刷 IF 已取的一条 → 下一条 c2, branch+1
+    rep = _run_cycles("""
+.text
+start:
+    beq r1, r2, L
+L:  nop
+    halt
+""")
+    assert rep.issues[0][2] == 0
+    assert rep.issues[1][2] == 2
+    assert rep.stalls["branch"] == 1
+    assert rep.cycles == 7                      # halt 在 c3 + 4
+
+
+def test_cycle_state_matches_iss():
+    # 周期模型与 ISS 的功能语义必须一致(只差"快不快")
+    text = """
+.data
+x:  .word 5
+y:  .word 7
+z:  .word 0
+.text
+start:
+    ld r2, x
+    ld r3, y
+    add r1, r2, r3
+    st  r1, z
+    halt
+"""
+    img = link(assemble(text))
+    iss = ISS(img.mem, entry=img.entry)
+    iss.run()
+    rep = run_cycle(img.mem, entry=img.entry)
+    assert rep.regs == iss.regs
+    assert rep.mem == bytes(iss.mem)

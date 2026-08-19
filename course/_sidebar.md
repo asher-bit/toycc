@@ -85,6 +85,12 @@
 - [Pattern Rewrite 与 Dialect Conversion](mlir/03_rewrite_and_conversion.md)
 - [Bufferization、Lowering 与测试](mlir/04_bufferize_lowering_tests.md)
 
+**模拟器**
+
+- [模拟器专题目录](sim/README.md)
+- [性能模型的设计](sim/01_performance_models.md)
+- [周期模型的设计](sim/02_cycle_models.md)
+
 **GPU 工具链**
 
 - [GPU 工具链专题目录](gpu/README.md)
